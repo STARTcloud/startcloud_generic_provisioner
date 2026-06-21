@@ -11,11 +11,6 @@ id_rsa
 Hosts.yml
 results.yml
 templates/auto-SHI-Hosts.yml
-# Don't include your ID Files!
-id-files/*.ids
-id-files/*.id
-id-files/*.IDS
-id-files/*.ID
 DeployKey_rsa
 *.vdi
 vault-Docova.yml
@@ -37,9 +32,3 @@ SAFE.IDS
 build/
 test_files/
 
-*/installers/*/archives/*.tar.xz
-*/installers/*/archives/*.tar.gz
-*/installers/*/archives/*.tar
-*/installers/*/archives/*.zip
-*/installers/*/archives/*.gz
-*/installers/*/archives/*.tgz

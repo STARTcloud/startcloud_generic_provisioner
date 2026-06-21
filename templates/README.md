@@ -1,42 +1,52 @@
 # Hosts Configuration Templates
 
-This repository contains two main configuration templates for provisioning virtual machines: `debug-Hosts.yml` and `SHI-Hosts.yml`. These templates are used to define the settings and configurations for different environments.
+This repository (`startcloud_generic_provisioner`) is a generic STARTcloud provisioner — a base box with no application stack baked in. You add the `startcloud.startcloud_roles` you need (e.g. `haproxy`, `keepalived`) under `roles:` in your `Hosts.yml`.
 
-# Directions
+This directory contains the configuration templates: `example-Hosts.yml`, `debug-Hosts.yml`, and `Hosts.template.yml`.
 
-Access the template directory
-```
-cd hcl_domino_standalone_provisioner/templates
-```
+## Directions
 
-Copy your template of choice
-```
-cp debug-Hosts.yml ../Hosts.yml
+Access the template directory:
+
+```bash
+cd startcloud_generic_provisioner/templates
 ```
 
-Then go up a directory
+Copy your template of choice:
 
+```bash
+cp example-Hosts.yml ../Hosts.yml
 ```
+
+Then go up a directory:
+
+```bash
 cd ../
 ```
 
-Then you can edit your template file, it will not be tracked by git
-```
+Then edit your `Hosts.yml` (it is not tracked by git):
+
+```bash
 nano Hosts.yml
 ```
 
 ## Templates Overview
 
+### example-Hosts.yml
+
+- **Purpose**: A clean generic example — base foundation roles (setup, networking, disks, hostname, dependencies, service_user, sdkman, ssl) plus `vagrant_readme` and `lockdown`, with a commented spot to add the roles your box needs.
+- **Usage**: Copy to `../Hosts.yml`, replace the `REPLACEME` values, and add roles.
+
 ### debug-Hosts.yml
 
-- **Purpose**: This is a non-templated version used by a developer across various builds. It is designed to work on both Bhyve and VirtualBox simultaneously.
-- **Usage**: This file is used directly without any templating. It contains all the necessary configurations for a specifc development environment, a good resource for how to structure yours.
+- **Purpose**: A non-templated version a developer uses across various builds. Designed to work on both Bhyve and VirtualBox. A good reference for how to structure your own.
+- **Usage**: Used directly without any templating.
 
-### SHI-Hosts.yml
+### Hosts.template.yml
 
-- **Purpose**: This is a templated version specifically for the Super.Human.Installer project.
-- **Usage**: This file is processed with a templating engine to generate the final `Hosts.yml` file for use in the Super.Human.Installer project.
+- **Purpose**: A templated version for the Super.Human.Installer project. Placeholders (`::SERVER_HOSTNAME::`, `::NETWORK_ADDRESS::`, `::SERVICE_USER::`, `::ROLES::`, etc.) are substituted by the installer to generate the final `Hosts.yml`. `::ROLES::` is the injection point for this box's roles.
+- **Usage**: Processed with a templating engine to generate the final `Hosts.yml`.
 
-### Add your own here!
+### Add your own
 
-If you want to add your own, update this README.md with a brief description of what it does. In your Pull request be sure to mention why it should different from the debug or SHI versions.
+If you add your own template, update this README.md with a brief description of what it does, and in your pull request mention why it differs from the existing ones.
