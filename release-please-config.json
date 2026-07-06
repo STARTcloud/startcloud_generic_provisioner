@@ -9,8 +9,15 @@
             "draft": false,
             "version-file": "version.rb",
             "extra-files": [
-                "provisioner.yml",
-                "templates/Hosts.template.yml"
+                {
+                    "type": "yaml",
+                    "path": "provisioner.yml",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "generic",
+                    "path": "templates/Hosts.template.yml"
+                }
             ],
             "prerelease": false,
             "default-branch" : "main",
