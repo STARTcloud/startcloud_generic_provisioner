@@ -1,7 +1,4 @@
-# STARTcloud Generic Provisioner metadata
-# name: and version: are the import/seed identity — the registry files this
-# tree as <name>/<version>/. version: is stamped by release-please.
-name: "startcloud_generic_provisioner"
-version: "0.1.24" # x-release-please-version
-description: "Generic provisioner for STARTcloud servers"
-author: "STARTcloud"
+name: startcloud_generic_provisioner
+version: 0.1.24
+description: Generic provisioner for STARTcloud servers
+author: STARTcloud
