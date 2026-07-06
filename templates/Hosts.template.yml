@@ -1,59 +1,73 @@
 # core_provisioner_version: 0.2.8
 # provisioner_name: startcloud_generic_provisioner
-# provisioner_version: 0.0.1
+# provisioner_version: 0.1.24 # x-release-please-version
+#
+# Template Notes:
+# pongo2 (Django-flavored Jinja2) template rendered by the hyperweaver-agent
+# generator. Context: structured `settings`/`networks`/`roles` from the machine
+# spec, plus property values by exact field name. Undefined variables render
+# empty, so anything optional carries a |default: fallback. pongo2 dialect:
+# filter args use colons, no `is defined`, no parenthesized filter args.
 ---
 hosts:
   -
     settings:
       # Identifiers
-      hostname: ::SERVER_HOSTNAME::
-      domain: ::SERVER_DOMAIN::
-      server_id: '::SERVER_ID::'
+      hostname: {{ settings.hostname }}
+      domain: {{ settings.domain }}
+      server_id: '{{ settings.server_id }}'
 
       # Resources
-      vcpus: ::RESOURCES_CPU::
-      memory: ::RESOURCES_RAM::
+      vcpus: {{ settings.vcpus|default:2 }}
+      memory: {{ settings.memory|default:"2G" }}
 
       # Console Access
-      consoleport: ::SERVER_ID::
+      consoleport: {{ settings.server_id }}
       consolehost: 0.0.0.0
       show_console: false ## Some people have reported issues when VBox doesn't show the Console
 
       # Box information
-      box: '::BOX::'
-      box_url: 'https://boxvault.startcloud.com'
-      box_version: ::BOX_VERSION::
-      box_arch: ::BOX_ARCH::
+      box: '{{ settings.box|default:"STARTcloud/debian13-server" }}'
+      box_url: '{{ settings.box_url|default:"https://boxvault.startcloud.com" }}'
+      box_version: {{ settings.box_version }}
+      box_arch: {{ settings.box_arch|default:"amd64" }}
 
       # Provider Specific Settings
-      provider_type: ::VAGRANT_PROVIDER::
-      os_type: '::OS_TYPE::'
-      firmware_type: UEFI
+      provider_type: {{ settings.provider_type|default:"virtualbox" }}
+      os_type: '{{ settings.os_type|default:"generic" }}'
+      firmware_type: {{ settings.firmware_type|default:"UEFI" }}
 
       # Setup Variables
-      setup_wait: ::SETUP_WAIT::
+      setup_wait: {{ settings.setup_wait|default:420 }}
 
       # Vagrant Configurations
       vagrant_user_private_key_path: ./core/ssh_keys/id_rsa
-      vagrant_user: ::SERVER_DEFAULT_USER:: #  startcloud
-      vagrant_user_pass: ::SERVER_DEFAULT_USER_PASS:: # 'STARTcloud24@!'
+      vagrant_user: {{ settings.vagrant_user|default:"startcloud" }}
+      vagrant_user_pass: '{{ settings.vagrant_user_pass|default:"STARTcloud24@!" }}'
       vagrant_ssh_insert_key: true
       vagrant_ssh_forward_agent: true
-      vagrant_communicator: ssh
+      vagrant_communicator: {{ settings.vagrant_communicator|default:"ssh" }}
 
     networks:
-      # Future iteration may omit this to skip attaching a bridged adapter, the below block will need to be a template unto itself
-      - type: external
-        address: ::NETWORK_ADDRESS::
-        netmask: ::NETWORK_NETMASK::
-        gateway: ::NETWORK_GATEWAY::
-        dhcp4: ::NETWORK_DHCP4::
-        dhcp6: false # false
-        bridge: ::NETWORK_BRIDGE::
-        mac: auto
+{% for network in networks %}
+      - type: {{ network.type|default:"external" }}
+        address: {{ network.address }}
+        netmask: {{ network.netmask|default:"255.255.255.0" }}
+        gateway: {{ network.gateway }}
+        dhcp4: {{ network.dhcp4|default:"false" }}
+        dhcp6: false
+        bridge: {{ network.bridge }}
+        mac: {{ network.mac|default:"auto" }}
         dns:
-          - nameserver: ::NETWORK_DNS_NAMESERVER_1::
-          - nameserver: ::NETWORK_DNS_NAMESERVER_2::
+{% if network.dns %}
+{% for entry in network.dns %}
+          - nameserver: {{ entry.nameserver }}
+{% endfor %}
+{% else %}
+          - nameserver: 1.1.1.1
+          - nameserver: 1.0.0.1
+{% endif %}
+{% endfor %}
 
     provisioning:
       shell:
@@ -92,7 +106,7 @@ hosts:
         description: "Directory for Ansible Scripts"
         map: ./provisioners/ansible/
         to: /vagrant/ansible/
-        type: rsync
+        type: {{ settings.sync_method|default:"rsync" }}
         args:
           - '--verbose'
           - '--archive'
@@ -103,19 +117,19 @@ hosts:
         description: "Directory for Pre-Signed SSLs"
         map: ./ssls/
         to: /secure/
-        type: rsync
+        type: {{ settings.sync_method|default:"rsync" }}
 
     vars:
       debug_all: true
-      selfsigned_enabled: ::CERT_SELFSIGNED::
+      selfsigned_enabled: {{ selfsigned_enabled|default:"true" }}
       haproxy_ssl_redirect: true
 
       ## Controls the Python Web Server Welcome Page Helper, when enabled help page is a massive security vulnerabilty, off for production machines
       quick_start: false
 
       ## Service account that owns deployed files (avoid the java_user default on a non-Java box)
-      service_user: ::SERVICE_USER::
-      service_group: ::SERVICE_GROUP::
+      service_user: {{ service_user|default:"startcloud" }}
+      service_group: {{ service_group|default:"startcloud" }}
 
     roles:
       - name: startcloud.startcloud_roles.setup
@@ -128,6 +142,10 @@ hosts:
       - name: startcloud.startcloud_roles.sdkman_install
       - name: startcloud.startcloud_roles.sdkman_java
       - name: startcloud.startcloud_roles.ssl
-      ::ROLES:: ## Injection point for this box's roles (e.g. haproxy, keepalived)
+{% for role in roles %}
+{% if role.enabled %}
+      - name: {{ role.name }}
+{% endif %}
+{% endfor %}
       - name: startcloud.startcloud_roles.vagrant_readme
       - name: startcloud.startcloud_roles.lockdown

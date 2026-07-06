@@ -9,7 +9,8 @@
             "draft": false,
             "version-file": "version.rb",
             "extra-files": [
-                "provisioner.yml"
+                "provisioner.yml",
+                "templates/Hosts.template.yml"
             ],
             "prerelease": false,
             "default-branch" : "main",
