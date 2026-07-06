@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.25](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.24...startcloud_generic_provisioner/v0.1.25) (2026-07-06)
+
+
+### Bug Fixes
+
+* ci/cd ([dae2729](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/dae2729ab6157afda1ef53254b6d37710e4dd2c3))
+
 ## [0.1.24](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner-v0.1.23...startcloud_generic_provisioner/v0.1.24) (2026-07-06)
 
 

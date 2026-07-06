@@ -1,6 +1,6 @@
 # core_provisioner_version: 0.2.8
 # provisioner_name: startcloud_generic_provisioner
-# provisioner_version: 0.1.24 # x-release-please-version
+# provisioner_version: 0.1.25 # x-release-please-version
 #
 # Template Notes:
 # pongo2 (Django-flavored Jinja2) template rendered by the hyperweaver-agent
