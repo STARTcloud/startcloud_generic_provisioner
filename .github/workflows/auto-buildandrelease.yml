@@ -5,66 +5,63 @@ on:
     branches:
       - main
 
-env:
-  app_name: hcl_domino_standalone_provisioner
-  suffix: ''
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
     outputs:
-      my_output: ${{ steps.build_info.outputs.version }}
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
     steps:
       -
         name: "Running Release-Please"
         id: release
-        uses: google-github-actions/release-please-action@v3
+        uses: googleapis/release-please-action@v4
         with:
-          command: manifest
-          default-branch: main
-          package-name: "${{ env.app_name }}"
-          bump-minor-pre-major: true
-          bump-patch-for-minor-pre-major: true
-          version-file: "${{ env.app_name }}/version.rb"
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
-      - 
-        name: "Checking out code"
-        uses: actions/checkout@v2
-        if: ${{ steps.release.outputs.release_created }}
-
-      - 
-        name: "Displaying build info"
-        id: build_info
-        if: ${{ steps.release.outputs.release_created }}
-        run: |
-          echo "Ref: ${{ github.ref_name }}"
-          echo "Tag: ${{ steps.release.outputs.tag_name }}"
-          echo "App Name: ${{ env.app_name }}"
-          echo "Version: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}"
-          echo "::set-output name=version::${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}"
+  build-seed-archive:
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      -
+        name: "Checking out code with submodules"
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       -
-        name: "Zipping Output"
-        id: zip_artifact
-        uses: vimtor/action-zip@v1
-        if: ${{ steps.release.outputs.release_created }}
-        with:
-          files: ${{ env.app_name }}/
-          dest: ${{ env.app_name }}.zip 
+        name: "Staging registry-shaped tree and building seed archive"
+        id: stage
+        run: |
+          NAME="$(awk -F'"' '/^name:/ {print $2; exit}' provisioner.yml)"
+          VERSION="$(awk -F'"' '/^version:/ {print $2; exit}' provisioner.yml)"
+          RELEASE_VERSION="${{ needs.release-please.outputs.version }}"
+          if [ "$VERSION" != "$RELEASE_VERSION" ]; then
+            echo "provisioner.yml version ($VERSION) does not match released version ($RELEASE_VERSION)" >&2
+            exit 1
+          fi
+          STAGE="$RUNNER_TEMP/seed/$NAME/$VERSION"
+          mkdir -p "$STAGE"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitmodules' \
+            --exclude='.gitattributes' \
+            --exclude='release-please-config.json' \
+            --exclude='.release-please-manifest.json' \
+            ./ "$STAGE/"
+          tar -czf "$NAME-$VERSION.tar.gz" -C "$RUNNER_TEMP/seed" "$NAME"
+          echo "artifact=$NAME-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
 
-      - 
-        name: "Creating release"
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        if: ${{ steps.release.outputs.release_created }}
-        with:
-          name: "${{ env.app_name }}: v${{ steps.build_info.outputs.version }}"
-          tag_name: ${{ env.app_name }}/v${{ steps.build_info.outputs.version }}${{ env.suffix }}
-          target_commitish: ${{ github.sha }}
-          body: |
-            This is a Production release of ${{ env.app_name }}.
-          draft: false
-          prerelease: false
-          files: |
-            ${{ env.app_name }}.zip
-          fail_on_unmatched_files: true
+      -
+        name: "Uploading seed archive to the release"
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" "${{ steps.stage.outputs.artifact }}"

@@ -1,0 +1,26 @@
+name: Ansible Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ansible-lint:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: "Checking out code"
+        uses: actions/checkout@v4
+
+      -
+        name: "Running ansible-lint (strict)"
+        uses: ansible/ansible-lint@main
+        with:
+          args: "--strict"
+          working_directory: provisioners/ansible
+          requirements_file: requirements.yml

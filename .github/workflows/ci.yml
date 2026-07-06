@@ -1,0 +1,36 @@
+name: CI
+
+# Reusable CI. Called by release-please.yml on push to main, and run directly on
+# every PR. Runs ansible-lint (strict), then chains CodeQL — same layout as
+# hyperweaver-docs / hyperweaver-server / hyperweaver-ui.
+
+on:
+  workflow_call:
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+  actions: read
+
+jobs:
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Run ansible-lint (strict)
+        uses: ansible/ansible-lint@main
+        with:
+          args: '--strict'
+          working_directory: provisioners/ansible
+          requirements_file: requirements.yml
+
+  codeql-analysis:
+    name: CodeQL
+    needs: [ansible-lint]
+    uses: ./.github/workflows/codeql.yml

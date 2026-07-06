@@ -1,0 +1,74 @@
+name: Build Provisioner Artifact
+
+# Reusable: called by release-please.yml when a release is created (and available
+# via manual dispatch to rebuild an existing release's asset). Publishes exactly
+# ONE release asset — startcloud_generic_provisioner-{version}.tar.gz — shaped
+# for the hyperweaver-agent provisioner registry: <name>/<version>/... where
+# name/version come from the root provisioner.yml. NOT git archive: core/ and
+# startcloud_roles are git submodules that git archive silently omits, so the
+# tree is staged from a submodules-recursive checkout with .git/CI files
+# stripped (the canonical seed-artifact contract per the AI sync file).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to build (must match provisioner.yml)'
+        required: true
+        type: string
+      tag_name:
+        description: 'GitHub release tag'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (must match provisioner.yml)'
+        required: true
+        type: string
+      tag_name:
+        description: 'GitHub release tag'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    name: Build & Upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code with submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Stage registry-shaped tree and build seed archive
+        id: stage
+        run: |
+          NAME="$(awk -F'"' '/^name:/ {print $2; exit}' provisioner.yml)"
+          VERSION="$(awk -F'"' '/^version:/ {print $2; exit}' provisioner.yml)"
+          if [ "$VERSION" != "${{ inputs.version }}" ]; then
+            echo "provisioner.yml version ($VERSION) does not match requested version (${{ inputs.version }})" >&2
+            exit 1
+          fi
+          STAGE="$RUNNER_TEMP/seed/$NAME/$VERSION"
+          mkdir -p "$STAGE"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitmodules' \
+            --exclude='.gitattributes' \
+            --exclude='release-please-config.json' \
+            --exclude='.release-please-manifest.json' \
+            ./ "$STAGE/"
+          tar -czf "$NAME-$VERSION.tar.gz" -C "$RUNNER_TEMP/seed" "$NAME"
+          echo "artifact=$NAME-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Upload seed archive to the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.tag_name }}" \
+            "${{ steps.stage.outputs.artifact }}" --clobber

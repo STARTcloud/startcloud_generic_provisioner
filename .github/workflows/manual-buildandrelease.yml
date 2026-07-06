@@ -1,100 +1,69 @@
 name: MANUAL - Build, Release and Publish
 
-on: 
+on:
   workflow_dispatch:
     inputs:
-      env:
-        description: 'An Environment'
-        required: true
-        type: choice
-        default: production
-        options:
-          - development
-          - production
       version:
-        description: 'A Version'
+        description: 'A Version (e.g. 0.1.25)'
         required: true
         type: string
-      caching:
-        description: 'Use caching'
-        required: true
-        type: boolean
-        default: false
-      draft: 
+      draft:
         description: 'Release as draft'
         required: true
         type: boolean
         default: true
+      prerelease:
+        description: 'Mark as prerelease'
+        required: true
+        type: boolean
+        default: false
 
-env:
-  app_name: ${{ inputs.env == 'production' && 'hcl_domino_standalone_provisioner' || 'hcl_domino_standalone_provisioner_development' }}
-  suffix: ${{ inputs.env == 'development' && '-dev' || '' }}
+permissions:
+  contents: write
 
 jobs:
-  release-please:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Build info
-        run: |
-          echo "Ref: ${{ github.ref_name }}"
-          echo "Env: ${{ inputs.env }}"
-          echo "Version: ${{ inputs.version }}"
-          echo "App Name: ${{ env.app_name }}"
-
-      - 
-        name: Checking out code
-        uses: actions/checkout@v4
-
-      - 
-        name: "Checking out STARTcloud/core_provisioner"
+      -
+        name: "Checking out code with submodules"
         uses: actions/checkout@v4
         with:
-          repository: STARTcloud/core_provisioner
-          path: "${{ env.app_name }}/core" 
-          clean: false
-          ref: "submodule"
-
-      - 
-        name: "Checking out STARTcloud/startcloud_roles"
-        uses: actions/checkout@v4
-        with:
-          repository: STARTcloud/startcloud_roles
-          path: ${{ env.app_name }}/provisioners/ansible_collections/startcloud/startcloud_roles
-          clean: false
-
-      - 
-        name: "Checking out STARTcloud/hcl_roles"
-        uses: actions/checkout@v4
-        with:
-          repository: STARTcloud/hcl_roles
-          path: ${{ env.app_name }}/provisioners/ansible_collections/startcloud/hcl_roles
-          clean: false
+          submodules: recursive
 
       -
-        name: "Removing .git directories"
+        name: "Staging registry-shaped tree and building seed archive"
+        id: stage
         run: |
-          rm -rf "${{ env.app_name }}/core/.git"
-          rm -rf "${{ env.app_name }}/provisioners/ansible_collections/startcloud/startcloud_roles/.git"
-          rm -rf "${{ env.app_name }}/provisioners/ansible_collections/startcloud/hcl_roles/.git"
+          NAME="$(awk -F'"' '/^name:/ {print $2; exit}' provisioner.yml)"
+          VERSION="${{ inputs.version }}"
+          STAGE="$RUNNER_TEMP/seed/$NAME/$VERSION"
+          mkdir -p "$STAGE"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitmodules' \
+            --exclude='.gitattributes' \
+            --exclude='release-please-config.json' \
+            --exclude='.release-please-manifest.json' \
+            ./ "$STAGE/"
+          sed -i "s/^version: .*/version: \"$VERSION\" # x-release-please-version/" "$STAGE/provisioner.yml"
+          sed -i "s/VERSION = '.*'/VERSION = '$VERSION'/" "$STAGE/version.rb"
+          tar -czf "$NAME-$VERSION.tar.gz" -C "$RUNNER_TEMP/seed" "$NAME"
+          echo "app_name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "artifact=$NAME-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
 
       -
-        name: Zipping Output
-        uses: vimtor/action-zip@v1
+        name: "Creating release"
+        uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.app_name }}/
-          dest: ${{ env.app_name }}.zip 
-
-      - 
-        name: Create release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: "${{ env.app_name }}: v${{ inputs.version }}"
-          tag_name: ${{ env.app_name }}/v${{ inputs.version }}${{ env.suffix }}
+          name: "${{ steps.stage.outputs.app_name }}: v${{ inputs.version }}"
+          tag_name: ${{ steps.stage.outputs.app_name }}-v${{ inputs.version }}
           target_commitish: ${{ github.sha }}
           body: |
-            This is a ${{ inputs.env }} release of ${{ env.app_name }}.
+            This is a manual release of ${{ steps.stage.outputs.app_name }}.
           draft: ${{ inputs.draft }}
-          prerelease: ${{ inputs.env == 'development' }}
+          prerelease: ${{ inputs.prerelease }}
           files: |
-            ${{ env.app_name }}.zip
+            ${{ steps.stage.outputs.artifact }}
           fail_on_unmatched_files: true

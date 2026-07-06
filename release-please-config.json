@@ -8,6 +8,9 @@
             "package-name": "startcloud_generic_provisioner",
             "draft": false,
             "version-file": "version.rb",
+            "extra-files": [
+                "provisioner.yml"
+            ],
             "prerelease": false,
             "default-branch" : "main",
             "component": "startcloud_generic_provisioner"
