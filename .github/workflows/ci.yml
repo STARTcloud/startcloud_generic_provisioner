@@ -26,12 +26,14 @@ jobs:
       - name: Run ansible-lint (strict)
         uses: ansible/ansible-lint@main
         # The package's ansible.cfg points collections/roles/vault at /vagrant
-        # (guest paths); env vars outrank ansible.cfg, so redirect them on the
-        # runner. There is no vault — /dev/null satisfies the file lookup.
+        # (guest paths — this dir rsynced into the VM); env vars outrank
+        # ansible.cfg, so point them at the same files where they live on the
+        # runner. The vault password must be non-empty, so use the package's
+        # own placeholder file, exactly as the guest does.
         env:
           ANSIBLE_COLLECTIONS_PATH: /home/runner/.ansible/collections
           ANSIBLE_ROLES_PATH: /home/runner/.ansible/roles
-          ANSIBLE_VAULT_PASSWORD_FILE: /dev/null
+          ANSIBLE_VAULT_PASSWORD_FILE: ${{ github.workspace }}/provisioners/ansible/git_vault_password
         with:
           args: '--strict'
           working_directory: provisioners/ansible
