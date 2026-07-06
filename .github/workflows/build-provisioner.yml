@@ -67,11 +67,17 @@ jobs:
             --exclude='.release-please-manifest.json' \
             ./ "$STAGE/"
           tar -czf "$NAME-$VERSION.tar.gz" -C "$RUNNER_TEMP/seed" "$NAME"
+          cp "$NAME-$VERSION.tar.gz" "$NAME.tar.gz"
           echo "artifact=$NAME-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "latest_artifact=$NAME.tar.gz" >> "$GITHUB_OUTPUT"
 
-      - name: Upload seed archive to the release
+      # Two assets per release, like hyperweaver-docs: the versioned archive for
+      # provenance and a version-less one so consumers can fetch a stable URL:
+      # releases/latest/download/startcloud_generic_provisioner.tar.gz
+      - name: Upload seed archives to the release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ inputs.tag_name }}" \
-            "${{ steps.stage.outputs.artifact }}" --clobber
+            "${{ steps.stage.outputs.artifact }}" \
+            "${{ steps.stage.outputs.latest_artifact }}" --clobber
