@@ -1,4 +1,5 @@
 name: startcloud_generic_provisioner
 version: 0.1.26
+label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud

@@ -44,8 +44,8 @@ nano Hosts.yml
 
 ### Hosts.template.yml
 
-- **Purpose**: A pongo2 (Django-flavored Jinja2) template rendered by the hyperweaver-agent generator to produce the final `Hosts.yml`. Context comes from the machine spec: structured `settings`/`networks`/`roles` plus property values by exact field name; enabled spec roles are injected between the base foundation roles and `vagrant_readme`/`lockdown`.
-- **Usage**: Rendered by the agent at machine start. Dialect note: pongo2, not full Jinja2 — filter args use colons (`|default:"x"`), no `is defined`, no parenthesized filter args.
+- **Purpose**: A true Jinja2 template rendered by the hyperweaver-agent generator (gonja; nunjucks on zoneweaver when its render step lands) to produce the final `Hosts.yml`. Context comes from the machine spec: structured `settings`/`networks`/`roles` plus property values by exact field name; enabled spec roles are injected between the base foundation roles and `vagrant_readme`/`lockdown`.
+- **Usage**: Rendered by the agent at machine start. Dialect: standard Jinja2 — parenthesized filter args (`|default("x")`), `loop.*` metadata, `is defined` works; undefined variables render empty.
 
 ### Add your own
 

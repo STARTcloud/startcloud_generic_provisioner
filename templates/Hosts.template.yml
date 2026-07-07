@@ -3,11 +3,12 @@
 # provisioner_version: 0.1.26 # x-release-please-version
 #
 # Template Notes:
-# pongo2 (Django-flavored Jinja2) template rendered by the hyperweaver-agent
-# generator. Context: structured `settings`/`networks`/`roles` from the machine
-# spec, plus property values by exact field name. Undefined variables render
-# empty, so anything optional carries a |default: fallback. pongo2 dialect:
-# filter args use colons, no `is defined`, no parenthesized filter args.
+# TRUE Jinja2 template (gonja on the Go agent, nunjucks on zoneweaver when
+# its render step lands) — the 2026-07-06 dialect ruling. Context: structured
+# `settings`/`networks`/`roles` from the machine spec, plus property values by
+# exact field name. Undefined variables render empty, so anything optional
+# carries a |default(...) fallback. Parenthesized filter args; loop.* for loop
+# metadata; colon filter args and forloop.* are dead.
 ---
 hosts:
   -
@@ -17,9 +18,12 @@ hosts:
       domain: {{ settings.domain }}
       server_id: '{{ settings.server_id }}'
 
+      # Extra Actions
+      post_provision: {{ settings.post_provision|default("true") }}
+
       # Resources
-      vcpus: {{ settings.vcpus|default:2 }}
-      memory: {{ settings.memory|default:"2G" }}
+      vcpus: {{ settings.vcpus|default(2) }}
+      memory: {{ settings.memory|default("2G") }}
 
       # Console Access
       consoleport: {{ settings.server_id }}
@@ -27,37 +31,37 @@ hosts:
       show_console: false ## Some people have reported issues when VBox doesn't show the Console
 
       # Box information
-      box: '{{ settings.box|default:"STARTcloud/debian13-server" }}'
-      box_url: '{{ settings.box_url|default:"https://boxvault.startcloud.com" }}'
+      box: '{{ settings.box|default("STARTcloud/debian13-server") }}'
+      box_url: '{{ settings.box_url|default("https://boxvault.startcloud.com") }}'
       box_version: {{ settings.box_version }}
-      box_arch: {{ settings.box_arch|default:"amd64" }}
+      box_arch: {{ settings.box_arch|default("amd64") }}
 
       # Provider Specific Settings
-      provider_type: {{ settings.provider_type|default:"virtualbox" }}
-      os_type: '{{ settings.os_type|default:"generic" }}'
-      firmware_type: {{ settings.firmware_type|default:"UEFI" }}
+      provider_type: {{ settings.provider_type|default("virtualbox") }}
+      os_type: '{{ settings.os_type|default("generic") }}'
+      firmware_type: {{ settings.firmware_type|default("UEFI") }}
 
       # Setup Variables
-      setup_wait: {{ settings.setup_wait|default:420 }}
+      setup_wait: {{ settings.setup_wait|default(420) }}
 
       # Vagrant Configurations
       vagrant_user_private_key_path: ./core/ssh_keys/id_rsa
-      vagrant_user: {{ settings.vagrant_user|default:"startcloud" }}
-      vagrant_user_pass: '{{ settings.vagrant_user_pass|default:"STARTcloud24@!" }}'
+      vagrant_user: {{ settings.vagrant_user|default("startcloud") }}
+      vagrant_user_pass: '{{ settings.vagrant_user_pass|default("STARTcloud24@!") }}'
       vagrant_ssh_insert_key: true
       vagrant_ssh_forward_agent: true
-      vagrant_communicator: {{ settings.vagrant_communicator|default:"ssh" }}
+      vagrant_communicator: {{ settings.vagrant_communicator|default("ssh") }}
 
     networks:
 {% for network in networks %}
-      - type: {{ network.type|default:"external" }}
+      - type: {{ network.type|default("external") }}
         address: {{ network.address }}
-        netmask: {{ network.netmask|default:"255.255.255.0" }}
+        netmask: {{ network.netmask|default("255.255.255.0") }}
         gateway: {{ network.gateway }}
-        dhcp4: {{ network.dhcp4|default:"false" }}
+        dhcp4: {{ network.dhcp4|default("false") }}
         dhcp6: false
         bridge: {{ network.bridge }}
-        mac: {{ network.mac|default:"auto" }}
+        mac: {{ network.mac|default("auto") }}
         dns:
 {% if network.dns %}
 {% for entry in network.dns %}
@@ -77,22 +81,46 @@ hosts:
 
       ansible:
         enabled: true
-        scripts:
+        playbooks:
           - local:
-              - script: ansible/generate-playbook.yml
+              -
+                description: "This playbook imports Hosts.yml variables into a generated playbook: /vagrant/ansible/playbook.yml"
+                playbook: ansible/generate-playbook.yml
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
                 ssh_pipelining: true
                 verbose: false
-                remote_collections: true
-              - script: ansible/playbook.yml
+                callbacks: profile_tasks
+                run: always
+                remote_collections: false
+                collections: []
+              -
+                description: "This playbook configures the machine using the generated playbook: /vagrant/ansible/playbook.yml"
+                playbook: ansible/playbook.yml
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
                 ssh_pipelining: true
                 verbose: false
-                remote_collections: true
+                callbacks: profile_tasks
+                run: once
+                remote_collections: false
+                collections:
+                  - startcloud.startcloud_roles
+              -
+                description: "This playbook configures the machine for roles tagged as always, using the generated playbook: /vagrant/ansible/playbook.yml"
+                playbook: ansible/always-playbook.yml
+                ansible_python_interpreter: /usr/bin/python3
+                compatibility_mode: 2.0
+                install_mode: pip
+                ssh_pipelining: true
+                verbose: false
+                callbacks: profile_tasks
+                run: not_first
+                remote_collections: false
+                collections:
+                  - startcloud.startcloud_roles
 
     folders:
       -
@@ -106,7 +134,18 @@ hosts:
         description: "Directory for Ansible Scripts"
         map: ./provisioners/ansible/
         to: /vagrant/ansible/
-        type: {{ settings.sync_method|default:"rsync" }}
+        type: {{ settings.sync_method|default("rsync") }}
+        args:
+          - '--verbose'
+          - '--archive'
+          - '--delete'
+          - '-z'
+          - '--copy-links'
+      -
+        description: "Directory for Ansible Collections"
+        map: ./provisioners/ansible_collections/
+        to: /vagrant/ansible_collections/
+        type: {{ settings.sync_method|default("rsync") }}
         args:
           - '--verbose'
           - '--archive'
@@ -117,19 +156,19 @@ hosts:
         description: "Directory for Pre-Signed SSLs"
         map: ./ssls/
         to: /secure/
-        type: {{ settings.sync_method|default:"rsync" }}
+        type: {{ settings.sync_method|default("rsync") }}
 
     vars:
       debug_all: true
-      selfsigned_enabled: {{ selfsigned_enabled|default:"true" }}
+      selfsigned_enabled: {{ selfsigned_enabled|default("true") }}
       haproxy_ssl_redirect: true
 
       ## Controls the Python Web Server Welcome Page Helper, when enabled help page is a massive security vulnerabilty, off for production machines
       quick_start: false
 
       ## Service account that owns deployed files (avoid the java_user default on a non-Java box)
-      service_user: {{ service_user|default:"startcloud" }}
-      service_group: {{ service_group|default:"startcloud" }}
+      service_user: {{ service_user|default("service_user") }}
+      service_group: {{ service_group|default("service_user") }}
 
     roles:
       - name: startcloud.startcloud_roles.setup
