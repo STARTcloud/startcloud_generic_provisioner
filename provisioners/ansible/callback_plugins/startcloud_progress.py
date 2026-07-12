@@ -38,14 +38,23 @@ class CallbackModule(CallbackBase):
         self._current = None
         self._index = 0
 
-    def _role_name(self, task):
+    def _role_ident(self, task):
+        # Returns (ident, name). Transitions are detected by the role
+        # invocation's UUID, not its name: a role listed twice in a row with
+        # different vars (e.g. package_repository_server public + private) is
+        # two compiled role objects, and name-based detection would collapse
+        # them into one counted step (the observed 94/95). Every invocation
+        # emits at least one task (arg-spec validation is unconditional), so
+        # uuid transitions always equal the play's compiled role count.
         role = getattr(task, "_role", None)
         if role is None:
-            return None
+            return None, None
         try:
-            return role.get_name()
+            name = role.get_name()
         except Exception:
-            return None
+            return None, None
+        ident = getattr(role, "_uuid", None) or name
+        return ident, name
 
     def _emit(self, label, running_name):
         total = self._total if self._total >= self._completed else self._completed
@@ -72,16 +81,16 @@ class CallbackModule(CallbackBase):
         self._total = len([n for n in names if n not in self._EXCLUDED_ROLES])
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        name = self._role_name(task)
-        if not name or name in self._EXCLUDED_ROLES or name == self._current:
+        ident, name = self._role_ident(task)
+        if not ident or not name or name in self._EXCLUDED_ROLES or ident == self._current:
             return
-        # A new role has begun. Under the linear strategy the previous role has
-        # finished, so credit it complete now; the role just starting is the
-        # current activity and is not counted done until the NEXT role begins
-        # (or the play ends).
+        # A new role invocation has begun. Under the linear strategy the
+        # previous one has finished, so credit it complete now; the invocation
+        # just starting is the current activity and is not counted done until
+        # the NEXT one begins (or the play ends).
         if self._current is not None:
             self._completed += 1
-        self._current = name
+        self._current = ident
         self._index += 1
         label = name.split(".")[-1].replace("_", " ").title()
         self._emit(label, name)

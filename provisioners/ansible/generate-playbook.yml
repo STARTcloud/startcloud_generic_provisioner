@@ -1,6 +1,6 @@
 ---
 -
-  name: "Generating switchboard_provisioner Playbook Locally"
+  name: "Generating the local playbook for {{ provisioner_name }}"
   gather_facts: true
   hosts: all
   tasks:

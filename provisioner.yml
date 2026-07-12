@@ -3,3 +3,124 @@ version: 0.1.26
 label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud
+metadata:
+  ## Role names, descriptions, and per-role variable schemas are NOT mirrored
+  ## here — consumers read each role's meta/argument_specs.yml directly from
+  ## the collection shipped in this package (single source of truth).
+  ## This block carries ONLY what has no other home: informational ordering
+  ## hints for the role pickers. These CANNOT live in ansible meta/main.yml
+  ## dependencies, which auto-execute the dependency role.
+  roles:
+    - name: asterisk
+      depends_on:
+        - setup
+        - hostname
+        - dependencies
+        - service_user
+        - sdkman_install
+        - sdkman_java
+        - fail2ban
+    - name: bigbluebutton
+      depends_on:
+        - certbot
+        - docker
+    - name: bottles
+      depends_on:
+        - flatpak
+    - name: composer
+      depends_on:
+        - php
+    - name: drupal
+      depends_on:
+        - php
+        - composer
+        - mysql
+    - name: frigate
+      depends_on:
+        - docker
+    - name: graylog
+      depends_on:
+        - mongodb
+    - name: greenbone
+      depends_on:
+        - docker
+    - name: guacamole
+      depends_on:
+        - tomcat
+        - mysql
+    - name: kubernetes
+      depends_on:
+        - docker
+    - name: mattermost
+      depends_on:
+        - mysql
+        - nginx
+    - name: mrtg
+      depends_on:
+        - snmp
+    - name: mumble_web
+      depends_on:
+        - docker
+    - name: nextcloud
+      depends_on:
+        - mysql
+        - nginx
+        - php
+    - name: package_repository_server
+      depends_on:
+        - debian_packager
+    - name: php_versions
+      depends_on:
+        - php
+    - name: phpmyadmin
+      depends_on:
+        - mysql
+        - nginx
+        - php
+    - name: quick_start
+      depends_on:
+        - service_user
+        - cockpit
+        - ssl
+    - name: quick_start_html5
+      depends_on:
+        - service_user
+        - cockpit
+        - ssl
+    - name: remote_access
+      depends_on:
+        - firewall
+    - name: ruby
+      depends_on:
+        - service_user
+    - name: sdkman_gradle
+      depends_on:
+        - sdkman_install
+    - name: sdkman_install
+      depends_on:
+        - service_user
+    - name: sdkman_java
+      depends_on:
+        - sdkman_install
+    - name: sdkman_maven
+      depends_on:
+        - sdkman_install
+    - name: startcloud_theme
+      depends_on:
+        - serial
+    - name: tomcat
+      depends_on:
+        - sdkman_install
+        - sdkman_java
+    - name: vaultwarden
+      depends_on:
+        - docker
+    - name: xrdp
+      depends_on:
+        - desktop_gnome
+    - name: zfs_unlock_service
+      depends_on:
+        - zfs
+    - name: zrepl
+      depends_on:
+        - zfs
