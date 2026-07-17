@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.28](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.27...startcloud_generic_provisioner/v0.1.28) (2026-07-17)
+
+
+### Bug Fixes
+
+* Hosts.template.yml ([b35f1b5](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/b35f1b5d188fbc4df82d5491e5328bcbb763e2d4))
+* updating default template ([52c15cf](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/52c15cf58e594387b114989980d7b1bdf48f5b07))
+* updating default template ([705012b](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/705012bb5cd950850b0714ac4018899d6b1effd4))
+
 ## [0.1.27](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.26...startcloud_generic_provisioner/v0.1.27) (2026-07-17)
 
 
