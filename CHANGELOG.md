@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.27](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.26...startcloud_generic_provisioner/v0.1.27) (2026-07-17)
+
+
+### Bug Fixes
+
+* CI/CD checksums ([9f4ff91](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/9f4ff91ab788ae386c38721fa09186cb75206b34))
+* CI/CD checksums ([014e32f](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/014e32f306daa9558678a8a75aa6afb6838ef68c))
+* forging the perfect provisioner ([4f9c12d](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/4f9c12d72453c437a150a85c13bdce351aaeba90))
+* issues ([7124015](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/71240156ec3dbed03ba55d7c49b671a3f44178f6))
+* new progress method ([0238a0b](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/0238a0ba17f6b24543eef317bec6b681cf7d1823))
+
 ## [0.1.26](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.25...startcloud_generic_provisioner/v0.1.26) (2026-07-06)
 
 
