@@ -68,16 +68,22 @@ jobs:
             ./ "$STAGE/"
           tar -czf "$NAME-$VERSION.tar.gz" -C "$RUNNER_TEMP/seed" "$NAME"
           cp "$NAME-$VERSION.tar.gz" "$NAME.tar.gz"
+          sha256sum "$NAME-$VERSION.tar.gz" > "$NAME-$VERSION.tar.gz.sha256"
+          sha256sum "$NAME.tar.gz" > "$NAME.tar.gz.sha256"
           echo "artifact=$NAME-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
           echo "latest_artifact=$NAME.tar.gz" >> "$GITHUB_OUTPUT"
 
-      # Two assets per release, like hyperweaver-docs: the versioned archive for
-      # provenance and a version-less one so consumers can fetch a stable URL:
-      # releases/latest/download/startcloud_generic_provisioner.tar.gz
+      # Four assets per release: the versioned archive for provenance, a
+      # version-less one so consumers can fetch a stable URL
+      # (releases/latest/download/startcloud_generic_provisioner.tar.gz), and a
+      # .sha256 sidecar per archive (provisioner-catalog contract — the catalog
+      # and agents verify it after download).
       - name: Upload seed archives to the release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ inputs.tag_name }}" \
             "${{ steps.stage.outputs.artifact }}" \
-            "${{ steps.stage.outputs.latest_artifact }}" --clobber
+            "${{ steps.stage.outputs.artifact }}.sha256" \
+            "${{ steps.stage.outputs.latest_artifact }}" \
+            "${{ steps.stage.outputs.latest_artifact }}.sha256" --clobber
