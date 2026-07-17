@@ -1,0 +1,20 @@
+# Dependabot configuration for Core Provisioner
+# The repo ships plain Ruby consumed by Vagrant — the only managed ecosystem
+# here is the GitHub Actions toolchain.
+
+version: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    # '/' is the documented value for github-actions — Dependabot scans
+    # .github/workflows from the repo root itself.
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+    open-pull-requests-limit: 5
+    labels:
+      - 'github-actions'
+      - 'dependencies'
+    commit-message:
+      prefix: 'ci'
