@@ -1,13 +1,16 @@
 name: Build Provisioner Artifact
 
 # Reusable: called by release-please.yml when a release is created (and available
-# via manual dispatch to rebuild an existing release's asset). Publishes exactly
-# ONE release asset — startcloud_generic_provisioner-{version}.tar.gz — shaped
-# for the hyperweaver-agent provisioner registry: <name>/<version>/... where
-# name/version come from the root provisioner.yml. NOT git archive: core/ and
-# startcloud_roles are git submodules that git archive silently omits, so the
-# tree is staged from a submodules-recursive checkout with .git/CI files
-# stripped (the canonical seed-artifact contract per the AI sync file).
+# via manual dispatch to rebuild an existing release's asset). Publishes release
+# assets shaped for the hyperweaver-agent provisioner registry:
+# <name>/<version>/... where name/version come from the root provisioner.yml.
+# Checks out the TAG on both paths so rebuilds stay byte-identical.
+#
+# The core driver is NOT a submodule: it is fetched from the core_provisioner
+# release pinned in driver.version, sha256-verified, extracted as driver/, and
+# its ssls/ seed copied in non-clobbering — then staged into the artifact.
+# startcloud_roles remains a git submodule until the Galaxy cut, so the tree is
+# staged from a submodules-recursive checkout (git archive would omit it).
 
 on:
   workflow_call:
@@ -39,10 +42,36 @@ jobs:
     name: Build & Upload
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code with submodules
+      - name: Checkout release tag with submodules
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag_name }}
           submodules: recursive
+
+      - name: Fetch pinned core driver and seed shared material
+        run: |
+          TAG="$(tr -d '[:space:]' < driver.version)"
+          VERSION="${TAG#v}"
+          ARCHIVE="core_provisioner-${VERSION}.tar.gz"
+          BASE="https://github.com/STARTcloud/core_provisioner/releases/download/${TAG}"
+          echo "Fetching core driver ${TAG}"
+          curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
+          curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
+          EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
+          ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "Checksum mismatch for $ARCHIVE: expected $EXPECTED, got $ACTUAL" >&2
+            exit 1
+          fi
+          tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C .
+          test -f driver/Hosts.rb || { echo "driver/Hosts.rb missing after extraction" >&2; exit 1; }
+          # Seed shared certificate material non-clobbering — repo/user files win.
+          (cd driver && find ssls -type f) | while IFS= read -r f; do
+            if [ ! -e "$f" ]; then
+              mkdir -p "$(dirname "$f")"
+              cp "driver/$f" "$f"
+            fi
+          done
 
       - name: Stage registry-shaped tree and build seed archive
         id: stage

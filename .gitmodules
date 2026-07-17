@@ -1,7 +1,3 @@
-[submodule "core"]
-	path = core
-	url = https://github.com/STARTcloud/core_provisioner
-	branch = submodule
 [submodule "provisioners/ansible_collections/startcloud/startcloud_roles"]
 	path = provisioners/ansible_collections/startcloud/startcloud_roles
 	url = https://github.com/STARTcloud/startcloud_roles
