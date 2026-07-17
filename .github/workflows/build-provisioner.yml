@@ -8,7 +8,8 @@ name: Build Provisioner Artifact
 #
 # The core driver is NOT a submodule: it is fetched from the core_provisioner
 # release pinned in driver.version, sha256-verified, extracted as driver/, and
-# its ssls/ seed copied in non-clobbering — then staged into the artifact.
+# staged into the artifact. driver/ssls is the CANONICAL SSL tree — the
+# document's folders[] syncs it to /secure/; there is no repo-side ssls/.
 # startcloud_roles remains a git submodule until the Galaxy cut, so the tree is
 # staged from a submodules-recursive checkout (git archive would omit it).
 
@@ -48,7 +49,7 @@ jobs:
           ref: ${{ inputs.tag_name }}
           submodules: recursive
 
-      - name: Fetch pinned core driver and seed shared material
+      - name: Fetch pinned core driver
         run: |
           TAG="$(tr -d '[:space:]' < driver.version)"
           VERSION="${TAG#v}"
@@ -65,13 +66,6 @@ jobs:
           fi
           tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C .
           test -f driver/Hosts.rb || { echo "driver/Hosts.rb missing after extraction" >&2; exit 1; }
-          # Seed shared certificate material non-clobbering — repo/user files win.
-          (cd driver && find ssls -type f) | while IFS= read -r f; do
-            if [ ! -e "$f" ]; then
-              mkdir -p "$(dirname "$f")"
-              cp "driver/$f" "$f"
-            fi
-          done
 
       - name: Stage registry-shaped tree and build seed archive
         id: stage

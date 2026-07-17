@@ -57,19 +57,6 @@ unless File.file?(File.join(driver_dir, 'Hosts.rb'))
 
     system('tar', '-xzf', archive, '-C', root) || raise("Extraction of #{archive_name} failed")
   end
-
-  ## Seed shared certificate material from the driver, non-clobbering:
-  ## a user's own files in ./ssls/ always win over seed material.
-  Dir.glob(File.join(driver_dir, 'ssls', '**', '*')).each do |seed|
-    next unless File.file?(seed)
-
-    rel = seed.sub(/\A#{Regexp.escape(driver_dir)}\/?/, '')
-    dest = File.join(root, rel)
-    next if File.exist?(dest)
-
-    FileUtils.mkdir_p(File.dirname(dest))
-    FileUtils.cp(seed, dest)
-  end
 end
 
 require File.expand_path(File.join(root, 'driver', 'Hosts.rb'))

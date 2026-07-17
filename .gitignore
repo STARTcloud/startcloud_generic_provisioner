@@ -12,18 +12,9 @@ Hosts.yml
 results.yml
 
 # The core_provisioner driver is fetched at build/bootstrap from the release
-# pinned in driver.version — never committed.
+# pinned in driver.version — never committed. Its ssls/ subtree is the
+# canonical SSL location (synced to /secure/; BYO certs drop in there too).
 driver/
-
-# Shared certificate material is SEEDED from the driver (non-clobbering);
-# ssls/ itself is the user's BYO drop zone and stays out of git.
-ssls/ca/ca-certificate.crt
-ssls/ca/ca-certificate.key
-ssls/ca/ca-certificate.no.key
-ssls/ca/default-signed.ca
-ssls/combined/default-signed.crt
-ssls/crt/default-signed.crt
-ssls/key/default-signed.key
 templates/auto-SHI-Hosts.yml
 DeployKey_rsa
 *.vdi

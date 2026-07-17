@@ -1,52 +1,16 @@
 # Hosts Configuration Templates
 
-This repository (`startcloud_generic_provisioner`) is a generic STARTcloud provisioner — a base box with no application stack baked in. You add the `startcloud.startcloud_roles` you need (e.g. `haproxy`, `keepalived`) under `roles:` in your `Hosts.yml`.
+This repository (`startcloud_generic_provisioner`) is a generic STARTcloud provisioner — a base box with no application stack baked in. You add the `startcloud.startcloud_roles` you need (e.g. `haproxy`, `mariadb`) under `roles:` in your `Hosts.yml`.
 
-This directory contains the configuration templates: `example-Hosts.yml`, `debug-Hosts.yml`, and `Hosts.template.yml`.
+## Hosts.template.yml
 
-## Directions
+- **Purpose**: A true Jinja2 template rendered by the hyperweaver-agent generator (gonja; nunjucks on zoneweaver when its render step lands) to produce the final `Hosts.yml`. Context comes from the machine spec: structured `settings`/`networks`/`roles` plus manifest field answers by exact field name; every settings key echoes the create context with the package value as fallback (`| default(...)`), and enabled picker roles are appended after the base foundation roles.
+- **Usage**: Rendered by the agent at machine create. Dialect: standard Jinja2 — parenthesized filter args (`|default("x")`), `loop.*` metadata, `is defined` works; undefined variables render empty.
 
-Access the template directory:
+## Hand-writing a Hosts.yml (plain vagrant use)
 
-```bash
-cd startcloud_generic_provisioner/templates
-```
+Create `Hosts.yml` at the repository root (it is gitignored). The driver ships reference documents under `driver/examples/` — the driver directory is fetched automatically on first `vagrant up` from the core_provisioner release pinned in `driver.version`.
 
-Copy your template of choice:
-
-```bash
-cp example-Hosts.yml ../Hosts.yml
-```
-
-Then go up a directory:
-
-```bash
-cd ../
-```
-
-Then edit your `Hosts.yml` (it is not tracked by git):
-
-```bash
-nano Hosts.yml
-```
-
-## Templates Overview
-
-### example-Hosts.yml
-
-- **Purpose**: A clean generic example — base foundation roles (setup, networking, disks, hostname, dependencies, service_user, sdkman, ssl) plus `vagrant_readme` and `lockdown`, with a commented spot to add the roles your box needs.
-- **Usage**: Copy to `../Hosts.yml`, replace the `REPLACEME` values, and add roles.
-
-### debug-Hosts.yml
-
-- **Purpose**: A non-templated version a developer uses across various builds. Designed to work on both Bhyve and VirtualBox. A good reference for how to structure your own.
-- **Usage**: Used directly without any templating.
-
-### Hosts.template.yml
-
-- **Purpose**: A true Jinja2 template rendered by the hyperweaver-agent generator (gonja; nunjucks on zoneweaver when its render step lands) to produce the final `Hosts.yml`. Context comes from the machine spec: structured `settings`/`networks`/`roles` plus property values by exact field name; enabled spec roles are injected between the base foundation roles and `vagrant_readme`/`lockdown`.
-- **Usage**: Rendered by the agent at machine start. Dialect: standard Jinja2 — parenthesized filter args (`|default("x")`), `loop.*` metadata, `is defined` works; undefined variables render empty.
-
-### Add your own
+## Add your own
 
 If you add your own template, update this README.md with a brief description of what it does, and in your pull request mention why it differs from the existing ones.

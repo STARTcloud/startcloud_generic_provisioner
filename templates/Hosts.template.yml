@@ -237,7 +237,7 @@ hosts:
 
       -
         description: "Directory for Pre-Signed SSLs"
-        map: ./ssls/
+        map: ./driver/ssls/
         to: /secure/
         type: rsync
 
