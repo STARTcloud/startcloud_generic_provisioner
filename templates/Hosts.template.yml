@@ -1,60 +1,150 @@
-# core_provisioner_version: 0.2.8
 # provisioner_name: startcloud_generic_provisioner
-# provisioner_version: 0.1.26
-# This is a template file for a template file . . . meaning This is used when a Build of the Provisioner is made and turned int othe Template file that SHI uses
+# Platform Hosts template — true Jinja2, rendered by the agents at machine create.
+# Context supplied by the platform: structured settings/networks/roles + manifest field answers.
+# Goal: renders a Hosts.yml that works on Bhyve and Virtualbox simultaneously.
 ---
 hosts:
   -
     settings:
+      # Vagrant Debug
+      debug_build: {{ settings.debug_build | default(true) }}
+
       # Identifiers
-      hostname: ::SERVER_HOSTNAME::
-      domain: ::SERVER_DOMAIN::
-      server_id: '::SERVER_ID::'
+      hostname: {{ settings.hostname }}
+      domain: {{ settings.domain }}
+      server_id: '{{ settings.server_id }}'
+
+      # Extra Actions
+      post_provision: {{ settings.post_provision | default(true) }} ## This calls extra things after Ansible completes, like syncing the new SSH key from the lockdown role, or the id_files or the support bundle
 
       # Resources
-      vcpus: ::RESOURCES_CPU::
-      memory: ::RESOURCES_RAM::
+      vcpus: {{ settings.vcpus }}
+      memory: {{ settings.memory }}
 
       # Console Access
-      consoleport: ::SERVER_ID::
-      consolehost: 0.0.0.0
-      show_console: false ## Some people have reported issues when VBox doesn't show the Console
+      consoleport: {{ settings.consoleport | default(settings.server_id) }}
+      consolehost: {{ settings.consolehost | default("0.0.0.0") }}
+      show_console: {{ settings.show_console | default(false) }}
 
       # Box information
-      box: 'STARTcloud/debian12-server'
-      box_url: 'https://boxvault.startcloud.com'
-      box_version: 0.0.4
-      box_arch: amd64
+      box: '{{ settings.box | default("STARTcloud/debian13-server") }}'
+      box_url: '{{ settings.box_url | default("https://boxvault.startcloud.com") }}'
+      box_version: {{ settings.box_version | default("2025.8.13") }}
+      box_arch: {{ settings.box_arch | default("amd64") }}
 
       # Provider Specific Settings
-      provider_type: virtualbox
-      os_type: 'Debian_64'
-      firmware_type: UEFI
+      provider_type: {{ settings.provider_type | default("virtualbox") }}
+      os_type: '{{ settings.os_type | default("Debian_64") }}'
+      firmware_type: {{ settings.firmware_type | default("UEFI") }}
 
       # Setup Variables
-      setup_wait: 300
+      setup_wait: {{ settings.setup_wait | default(420) }}
 
       # Vagrant Configurations
-      vagrant_user_private_key_path: ./id_rsa
-      vagrant_user: ::SERVER_DEFAULT_USER:: #  startcloud
-      vagrant_user_pass: ::SERVER_DEFAULT_USER_PASS:: # 'STARTcloud24@!' 
-      vagrant_ssh_insert_key: true
-      vagrant_ssh_forward_agent: true
-      vagrant_communicator: ssh
+      vagrant_user: {{ settings.vagrant_user | default("startcloud") }}
+      vagrant_user_pass: '{{ settings.vagrant_user_pass | default("STARTcloud24@!") }}'
+      vagrant_user_private_key_path: {{ settings.vagrant_user_private_key_path | default("./id_rsa") }}
+      vagrant_ssh_insert_key: {{ settings.vagrant_ssh_insert_key | default(true) }}
+      vagrant_ssh_forward_agent: {{ settings.vagrant_ssh_forward_agent | default(true) }}
+      vagrant_ssh_keep_alive: {{ settings.vagrant_ssh_keep_alive | default(true) }}
+      vagrant_communicator: {{ settings.vagrant_communicator | default("ssh") }}
+
+    plugins:
+      install:
+        -
+          name: vagrant-scp-sync
+          version: latest
+#        -
+#          name: vagrant-zones
+#          version: latest
+      remove:
+        -
+          name: vagrant-scp
+
+    zones:
+      vmtype: production
+      brand: bhyve
+      on_demand_vnics: true
+      post_provision_boot: false
+      console_onboot: false
+      console: webvnc
+      debug: false
+      debug_boot: false
+      hostbridge: i440fx
+      acpi: on
+      autostart: true
+      # setup_method: one of 'zlogin', 'dhcp', 'qga'. zlogin drives the bhyve serial
+      # console via PTY+expect to log in and run setup commands. dhcp relies on the
+      # host-side dhcpd serving the etherstub. qga talks to qemu-guest-agent over a
+      # virtio-console UNIX socket (requires guest virtio-console + qemu-guest-agent
+      # and brand=bhyve).
+      setup_method: zlogin
+      # qga_slot: bhyve PCI slot reserved for the virtio-console qga channel. Only
+      # consulted when setup_method='qga'. Default is 9; bump if slot 9 conflicts
+      # with another device on this zone.
+      #qga_slot: 9
+      # qga_network_script: optional host-side script run via guest-exec instead of
+      # the built-in backend chain (netplan/NetworkManager/systemd-networkd/ifupdown
+      # on Linux; netsh on Windows; dladm on illumos; rc.conf on FreeBSD). The
+      # driver passes VAGRANT_QGA_VNIC/_MAC/_IP/_NETMASK/_GATEWAY/_DNS env vars per NIC.
+      #qga_network_script: ./scripts/qga-network.sh
+      diskif: virtio
+      netif: virtio-net-viona
+      booted_string: 'Web console:'
+      lcheck_string: ':~$'
+      alcheck_string: 'login:'
+      safe_restart: 'sudo shutdown -r'
+      safe_shutdown: 'sudo init 0 || true'
+      clean_shutdown_time: 200
+      snapshot_script: '/opt/vagrant/bin/Snapshooter.sh'
+      cpu_configuration: simple
 
     networks:
-      # Future iteration may omit this to skip attaching a bridged adpater, the below block will need to be template unto itself
-      - type: external
-        address: ::NETWORK_ADDRESS::
-        netmask: ::NETWORK_NETMASK::
-        gateway: ::NETWORK_GATEWAY::
-        dhcp4: ::NETWORK_DHCP4::
-        dhcp6: false # false
-        bridge: ::NETWORK_BRIDGE::
-        mac: auto
+      {% for network in networks %}
+      -
+        type: {{ network.type | default("external") }}
+        address: {{ network.address }}
+        netmask: {{ network.netmask }}
+        gateway: {{ network.gateway }}
+        autoconf: {{ network.autoconf | default(false) }}
+        vlan: {{ network.vlan }}
+        dhcp4: {{ network.dhcp4 | default(false) }}
+        dhcp6: {{ network.dhcp6 | default(false) }}
+        is_control: {{ network.is_control | default(false) }}
+        route: {{ network.route | default("default") }}
+        provisional: {{ network.provisional | default(false) }}
+        bridge: "{{ network.bridge }}"
+        nic_type: {{ network.nic_type | default("virtio") }}
+        mac: {{ network.mac | default("auto") }}
+        {% if network.dns %}
         dns:
-          - nameserver: ::NETWORK_DNS_NAMESERVER_1::
-          - nameserver: ::NETWORK_DNS_NAMESERVER_2::
+          {% for entry in network.dns %}
+          - nameserver: {{ entry.nameserver }}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+
+    disks:
+      boot:
+        array: Array-1
+        dataset: zones
+        volume_name: boot
+        mount: /
+        size: 100G
+
+      additional_disks:
+        -
+          array: Array-1
+          dataset: zones
+          sparse: true
+          live: false
+          filesystem: xfs
+          mount: /local
+          size: 50.0G
+          port: 5
+          device: vdb
+          driver: virtio-scsi
+          volume_name: disk1
 
     provisioning:
       shell:
@@ -64,31 +154,57 @@ hosts:
 
       ansible:
         enabled: true
-        scripts:
+        playbooks:
           - local:
-              - script: ansible/generate-playbook.yml
+              -
+                description: "This playbook imports Hosts.yml variables into a generated playbook: /vagrant/ansible/playbook.yml"
+                playbook: ansible/generate-playbook.yml
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
                 ssh_pipelining: true
                 verbose: false
-                remote_collections: true
-              - script: ansible/playbook.yml
+                callbacks: profile_tasks
+                run: always
+                remote_collections: false
+                collections: []
+              -
+                description: "This playbook configures the machine using the generated playbook: /vagrant/ansible/playbook.yml"
+                playbook: ansible/playbook.yml
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
                 ssh_pipelining: true
                 verbose: false
-                remote_collections: true
+                callbacks: profile_tasks
+                run: once
+                remote_collections: false
+                collections:
+                  - startcloud.startcloud_roles
+                  - startcloud.hcl_roles
+              -
+                description: "This playbook configures the machine for roles tagged as always, using the generated playbook: /vagrant/ansible/playbook.yml"
+                playbook: ansible/always-playbook.yml
+                ansible_python_interpreter: /usr/bin/python3
+                compatibility_mode: 2.0
+                install_mode: pip
+                ssh_pipelining: true
+                verbose: false
+                callbacks: profile_tasks
+                run: not_first
+                remote_collections: false
+                collections:
+                  - startcloud.startcloud_roles
 
     folders:
-      - 
+      -
         description: "Disables VBoxSF, do not enable"
         map: .
         to: /vagrant
         type: virtualbox
         disabled: true
         automount: true
+
       -
         description: "Directory for Ansible Scripts"
         map: ./provisioners/ansible/
@@ -100,16 +216,31 @@ hosts:
           - '--delete'
           - '-z'
           - '--copy-links'
+
+      -
+        description: "Directory for Ansible Collections"
+        map: ./provisioners/ansible_collections/
+        to: /vagrant/ansible_collections/
+        type: rsync
+        args:
+          - '--verbose'
+          - '--archive'
+          - '--delete'
+          - '-z'
+          - '--copy-links'
+
       -
         description: "Directory for Application Installers"
         map: ./installers/
         to: /vagrant/installers/
         type: rsync
+
       -
         description: "Directory for Pre-Signed SSLs"
         map: ./ssls/
         to: /secure/
         type: rsync
+
       -
         description: "Directory for Server and User IDs"
         map: ./id-files/
@@ -118,107 +249,50 @@ hosts:
         syncback: true
 
     vars:
+      # Secrets Override: If you don't want to use a secrets file you can override secrets here
+      # Uncomment and fill in these lines if you want to download the installers for this instance
+      # Note that the installer names must match the names on the download server.
+      #secrets:
+      #  installer_base_url: "https://XXXXXXXXX.XXXXXXXXX.XXX"
+      #  installer_url_user: "XXXXXXXXXXXX@XXXXXXXXXXX"
+      #  installer_url_pass: "XXXXXXXXXXXX"
+
+      ## Provisioner Debug
       debug_all: true
-      selfsigned_enabled: ::CERT_SELFSIGNED::
+
+      ## SSL
+      selfsigned_enabled: {{ CERT_SELFSIGNED }}
       haproxy_ssl_redirect: true
-      
-      # Domino Configuration Variables
-      domino_organization: ::SERVER_ORGANIZATION::
-      user_safe_id: ::USER_SAFE_ID::
-      domino_admin_notes_id_password: ::DOMINO_ADMIN_PASSWORD::
-      ots_generate_server_id_count: ::DOMINO_SERVER_CLUSTERMATES::
+      letsencrypt_enabled: false
+      letsencrypt_staging_enabled: false
 
-      # Additional server options
-      is_additional_server: ::DOMINO_IS_ADDITIONAL_INSTANCE::
+      ## Use Proxy for downloads and updates
+      use_proxy: false
+      proxy_server: 255.255.255.255
+      proxy_port: 3128
 
-      # Genesis Variables
-      genesis_packages:
-        - netmonitor
-        - SuperHumanPortal
+      ## Extra Packages
+      extra_packages: ['htop']
 
-      # Domino Installer Variables
-      domino_hash: ::DOMINO_HASH::
-      domino_major_version: ::DOMINO_MAJOR_VERSION::
-      domino_minor_version: ::DOMINO_MINOR_VERSION::
-      domino_patch_version: ::DOMINO_PATCH_VERSION::
-
-      # Domino fixpack Variables
-      domino_fp_hash: ::DOMINO_FP_HASH::
-      domino_server_installer_tar: ::DOMINO_INSTALLER::
-      domino_installer_fixpack_install: ::DOMINO_INSTALLER_FIXPACK_INSTALL::
-      domino_fixpack_version: ::DOMINO_INSTALLER_FIXPACK_VERSION::
-      domino_server_fixpack_tar: ::DOMINO_INSTALLER_FIXPACK::
-
-      # Domino Hotfix Variables
-      domino_hf_hash: ::DOMINO_HF_HASH::
-      domino_installer_hotfix_install: ::DOMINO_INSTALLER_HOTFIX_INSTALL::
-      domino_hotfix_version: ::DOMINO_INSTALLER_HOTFIX_VERSION::
-      domino_server_hotfix_tar: ::DOMINO_INSTALLER_HOTFIX::
-
-      # Leap Variables
-      leap_hash: ::LEAP_HASH::
-      leap_archive: ::LEAP_INSTALLER::
-      leap_version: ::LEAP_INSTALLER_VERSION::
-
-      # Nomad Web Variables
-      nomadweb_hash: ::NOMADWEB_HASH::
-      nomadweb_archive: ::NOMADWEB_INSTALLER::
-      nomadweb_version: ::NOMADWEB_VERSION::
-
-      # Traveler Variables
-      #traveler_hash: ::TRAVELER_HASH::
-      traveler_archive: ::TRAVELER_INSTALLER::
-      traveler_base_version: ::TRAVELER_INSTALLER_VERSION::
-      traveler_fixpack_archive: ::TRAVELER_FP_INSTALLER::
-      traveler_fixpack_version: ::TRAVELER_FP_INSTALLER_VERSION::
-
-      # Verse Variables
-      #verse_hash: ::VERSE_HASH::
-      verse_archive: ::VERSE_INSTALLER::
-      verse_base_version: ::VERSE_INSTALLER_VERSION::
-
-      # Domino Rest API Variables
-      #domino_rest_api_hash: ::DOMINO_REST_API_HASH::
-      domino_rest_api_version: ::DOMINO_REST_API_INSTALLER_VERSION::
-      domino_rest_api_archive: ::DOMINO_REST_API_INSTALLER::
+      ## Hosts entries for /etc/hosts ## Really only needed for Standalone
+      #etc_hosts_entries:
+      #  - hostname:.null
+      #    aliases:
+      #      -
+      #    ip:
 
     roles:
       - name: startcloud.startcloud_roles.setup
       - name: startcloud.startcloud_roles.networking
         tags: always
+      - name: startcloud.startcloud_roles.disks
       - name: startcloud.startcloud_roles.hostname
       - name: startcloud.startcloud_roles.dependencies
-      - name: startcloud.startcloud_roles.service_user
-      - name: startcloud.startcloud_roles.sdkman_install
-      - name: startcloud.startcloud_roles.sdkman_java
-      - name: startcloud.startcloud_roles.sdkman_maven
-      - name: startcloud.startcloud_roles.sdkman_gradle
-      - name: startcloud.startcloud_roles.ssl
-      ::ROLE_DOMINO_RESET:: #- name: startcloud.hcl_roles.domino_reset 
-      - name: startcloud.hcl_roles.domino_install
-      - name: startcloud.hcl_roles.domino_vagrant_rest_api 
-      - name: startcloud.hcl_roles.domino_service_nash
-      - name: startcloud.hcl_roles.domino_java_config
-      - name: startcloud.hcl_roles.domino_java_tools
-      - name: startcloud.hcl_roles.domino_updatesite
-      - name: startcloud.hcl_roles.domino_config 
-      - name: startcloud.hcl_roles.domino_genesis
-      - name: startcloud.hcl_roles.domino_genesis_applications
-      - name: startcloud.hcl_roles.domino_cross_certify
-      #- name: startcloud.hcl_roles.domino_java_app_example ## Uncomment Me to build your own Domino Java Servlet
-      ::ROLE_LEAP:: 
-      ::ROLE_NOMADWEB::
-      ::ROLE_TRAVELER:: 
-      ::ROLE_TRAVELER_HTMO:: 
-      ::ROLE_VERSE:: 
-      ::ROLE_RESTAPI:: ## Note to SHI devs, This should be called ROLE_DOMINO_RESTAPI, as this is different than startcloud.hcl_roles.domino_vagrant_rest_api
-      - name: startcloud.hcl_roles.domino_vagrant_readme
-      ::ROLE_MARIADB::  
-      ::ROLE_DOCKER::  
-      ::ROLE_VOLTMX_DOCKER::
-      ::ROLE_VOLTMX::
-      - name: startcloud.startcloud_roles.quick_start # ::ROLE_STARTCLOUD_QUICK_START::
-        tags: always
-      ::ROLE_STARTCLOUD_HAPROXY::
-      ::ROLE_STARTCLOUD_VAGRANT_README::
-      - name: startcloud.startcloud_roles.lockdown
+      - name: startcloud.startcloud_roles.guest_additions
+      - name: startcloud.startcloud_roles.qemu_guest_agent
+      # Picked roles — manifest role names from the platform role picker, mapped to this package's collection
+      {% for role in roles %}
+      {% if role.enabled %}
+      - name: startcloud.startcloud_roles.{{ role.name }}
+      {% endif %}
+      {% endfor %}
