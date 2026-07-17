@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.30](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.29...startcloud_generic_provisioner/v0.1.30) (2026-07-17)
+
+
+### Features
+
+* driver ssls is the canonical SSL tree; retire the SHI template generator ([a0f5a9f](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/a0f5a9f5b5eac4e2b06d27887d596b68dcc72c30))
+
+
+### Bug Fixes
+
+* adopt STARTcloud dev PKI - root CA trust anchor, chain serving, welcome-page root download, dead .pem references ([d1ab18e](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/d1ab18e65d26a867c5395880c527c7fe22b68f7e))
+
 ## [0.1.29](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.28...startcloud_generic_provisioner/v0.1.29) (2026-07-17)
 
 
