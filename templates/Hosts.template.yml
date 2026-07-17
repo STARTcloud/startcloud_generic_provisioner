@@ -241,13 +241,6 @@ hosts:
         to: /secure/
         type: rsync
 
-      -
-        description: "Directory for Server and User IDs"
-        map: ./id-files/
-        to: /id-files/
-        type: rsync
-        syncback: true
-
     vars:
       # Secrets Override: If you don't want to use a secrets file you can override secrets here
       # Uncomment and fill in these lines if you want to download the installers for this instance
