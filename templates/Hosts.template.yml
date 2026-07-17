@@ -118,8 +118,8 @@ hosts:
         mac: {{ network.mac | default("auto") }}
         {% if network.dns %}
         dns:
-          {% for entry in network.dns %}
-          - nameserver: {{ entry.nameserver }}
+          {% for nameserver in network.dns %}
+          - nameserver: {{ nameserver }}
           {% endfor %}
         {% endif %}
       {% endfor %}
