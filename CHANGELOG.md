@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.32](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.31...startcloud_generic_provisioner/v0.1.32) (2026-07-17)
+
+
+### Features
+
+* release new PKI and othe Rotated things ([566e07d](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/566e07d690d92b2f9329d57ee7a03f3d9cf5cf1c))
+* release new PKI and othe Rotated things ([926c131](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/926c131d48c03108e4b230ce09928792672e4e0a))
+
 ## [0.1.31](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.30...startcloud_generic_provisioner/v0.1.31) (2026-07-17)
 
 
