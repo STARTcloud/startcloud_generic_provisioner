@@ -1,15 +1,9 @@
 name: startcloud_generic_provisioner
-version: 0.1.26
+version: 0.1.27
 label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud
 metadata:
-  ## Role names, descriptions, and per-role variable schemas are NOT mirrored
-  ## here — consumers read each role's meta/argument_specs.yml directly from
-  ## the collection shipped in this package (single source of truth).
-  ## This block carries ONLY what has no other home: informational ordering
-  ## hints for the role pickers. These CANNOT live in ansible meta/main.yml
-  ## dependencies, which auto-execute the dependency role.
   roles:
     - name: asterisk
       depends_on:
