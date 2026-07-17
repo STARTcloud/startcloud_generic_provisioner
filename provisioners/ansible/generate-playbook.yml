@@ -1,6 +1,6 @@
 ---
 -
-  name: "Generating the local playbook for {{ provisioner_name }}"
+  name: "Generating the local playbook for {{ provisioner_name | default('provisioner') }}"
   gather_facts: true
   hosts: all
   tasks:
