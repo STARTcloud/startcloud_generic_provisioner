@@ -18,11 +18,13 @@ hosts:
       post_provision: {{ settings.post_provision | default(true) }} ## This calls extra things after Ansible completes, like syncing the new SSH key from the lockdown role, or the id_files or the support bundle
 
       # Resources
-      vcpus: {{ settings.vcpus }}
+      vcpus: {{ settings.vcpus | int }}
       memory: {{ settings.memory }}
 
-      # Console Access
-      consoleport: {{ settings.consoleport | default(settings.server_id) }}
+      # Console Access — consoleport only renders when the wizard sends one; absent = no VRDE console
+      {% if settings.consoleport %}
+      consoleport: {{ settings.consoleport }}
+      {% endif %}
       consolehost: {{ settings.consolehost | default("0.0.0.0") }}
       show_console: {{ settings.show_console | default(false) }}
 
@@ -125,26 +127,166 @@ hosts:
       {% endfor %}
 
     disks:
+      {% if disks %}
+      {% if disks.boot %}
       boot:
-        array: Array-1
-        dataset: zones
+        type: {{ disks.boot.type | default("template") }}
+        {% if disks.boot.path %}
+        path: {{ disks.boot.path }}
+        {% endif %}
+        {% if disks.boot.size %}
+        size: {{ disks.boot.size }}
+        {% endif %}
+        {% if disks.boot.sparse is defined %}
+        sparse: {{ disks.boot.sparse }}
+        {% endif %}
+        {% if disks.boot.volume_name %}
+        volume_name: {{ disks.boot.volume_name }}
+        {% endif %}
+        {% if disks.boot.clone_strategy %}
+        clone_strategy: {{ disks.boot.clone_strategy }}
+        {% endif %}
+        {% if disks.boot.pool %}
+        pool: {{ disks.boot.pool }}
+        {% endif %}
+        {% if disks.boot.dataset %}
+        dataset: {{ disks.boot.dataset }}
+        {% endif %}
+        {% if disks.boot.controller %}
+        controller: {{ disks.boot.controller }}
+        {% endif %}
+        {% if disks.boot.port is defined %}
+        port: {{ disks.boot.port }}
+        {% endif %}
+        {% if disks.boot.diskif %}
+        diskif: {{ disks.boot.diskif }}
+        {% endif %}
+        {% if disks.boot.mount %}
+        mount: {{ disks.boot.mount }}
+        {% endif %}
+        {% if disks.boot.filesystem %}
+        filesystem: {{ disks.boot.filesystem }}
+        {% endif %}
+        {% if disks.boot.device %}
+        device: {{ disks.boot.device }}
+        {% endif %}
+        {% if disks.boot.force %}
+        force: true
+        {% endif %}
+      {% endif %}
+      {% if disks.additional_disks %}
+      additional_disks:
+        {% for disk in disks.additional_disks %}
+        -
+          {% if disk.type %}
+          type: {{ disk.type }}
+          {% endif %}
+          {% if disk.path %}
+          path: {{ disk.path }}
+          {% endif %}
+          {% if disk.size %}
+          size: {{ disk.size }}
+          {% endif %}
+          {% if disk.sparse is defined %}
+          sparse: {{ disk.sparse }}
+          {% endif %}
+          {% if disk.volume_name %}
+          volume_name: {{ disk.volume_name }}
+          {% endif %}
+          {% if disk.pool %}
+          pool: {{ disk.pool }}
+          {% endif %}
+          {% if disk.dataset %}
+          dataset: {{ disk.dataset }}
+          {% endif %}
+          {% if disk.controller %}
+          controller: {{ disk.controller }}
+          {% endif %}
+          {% if disk.port is defined %}
+          port: {{ disk.port }}
+          {% endif %}
+          {% if disk.diskif %}
+          diskif: {{ disk.diskif }}
+          {% endif %}
+          {% if disk.mount %}
+          mount: {{ disk.mount }}
+          {% endif %}
+          {% if disk.filesystem %}
+          filesystem: {{ disk.filesystem }}
+          {% endif %}
+          {% if disk.device %}
+          device: {{ disk.device }}
+          {% endif %}
+          {% if disk.force %}
+          force: true
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if disks.cdroms %}
+      cdroms:
+        {% for cdrom in disks.cdroms %}
+        -
+          {% if cdrom.iso %}
+          iso: {{ cdrom.iso }}
+          {% endif %}
+          {% if cdrom.path %}
+          path: {{ cdrom.path }}
+          {% endif %}
+          {% if cdrom.controller %}
+          controller: {{ cdrom.controller }}
+          {% endif %}
+          {% if cdrom.port is defined %}
+          port: {{ cdrom.port }}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if disks.controllers %}
+      controllers:
+        {% for controller in disks.controllers %}
+        -
+          {% if controller.name %}
+          name: {{ controller.name }}
+          {% endif %}
+          {% if controller.type %}
+          type: {{ controller.type }}
+          {% endif %}
+          {% if controller.ports %}
+          ports: {{ controller.ports }}
+          {% endif %}
+          {% if controller.bootable is defined %}
+          bootable: {{ controller.bootable }}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% else %}
+      # Package default — rendered only when the wizard sends no disks
+      boot:
+        type: template
+        size: 100G
         volume_name: boot
         mount: /
-        size: 100G
+        {% if settings.provider_type | default("virtualbox") == "zone" %}
+        pool: Array-1
+        dataset: zones
+        {% endif %}
 
       additional_disks:
         -
-          array: Array-1
-          dataset: zones
-          sparse: true
-          live: false
-          filesystem: xfs
-          mount: /local
+          type: blank
           size: 50.0G
-          port: 5
-          device: vdb
-          driver: virtio-scsi
+          sparse: true
           volume_name: disk1
+          mount: /local
+          filesystem: xfs
+          device: vdb
+          {% if settings.provider_type | default("virtualbox") == "zone" %}
+          pool: Array-1
+          dataset: zones
+          {% else %}
+          port: 5
+          driver: virtio-scsi
+          {% endif %}
+      {% endif %}
 
     provisioning:
       shell:
