@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.29](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.28...startcloud_generic_provisioner/v0.1.29) (2026-07-17)
+
+
+### Features
+
+* consume core_provisioner via pinned release instead of git submodule ([0795c18](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/0795c187b6080c9ca3e548def5cee450b8dfe673))
+* driver ssls is the canonical SSL tree; retire the SHI template generator ([cd77c0f](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/cd77c0f89eeefc19ccf51057637adb10c50ff0da))
+
 ## [0.1.28](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.27...startcloud_generic_provisioner/v0.1.28) (2026-07-17)
 
 
