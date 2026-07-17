@@ -89,28 +89,8 @@ See the [open issues](https://github.com/STARTcloud/startcloud_generic_provision
 | VirtualBox     | Yes                            |
 | Bhyve/Zones    | Yes                            |
 | VMware Fusion  | No                             |
-| Hyper-V        | No                             |
-| Parallels      | No                             |
-| AWS EC2        | Yes                            |
-| Google Cloud   | No                             |
-| Azure          | No                             |
-| DigitalOcean   | No                             |
-| Linode         | No                             |
-| Vultr          | No                             |
-| Oracle Cloud   | No                             |
-| OpenStack      | No                             |
-| Rackspace      | No                             |
-| Alibaba Cloud  | No                             |
-| Aiven          | No                             |
-| Packet         | No                             |
-| Scaleway       | No                             |
-| OVH            | No                             |
-| Exoscale       | No                             |
-| Hetzner Cloud  | No                             |
 | KVM            | Yes                            |
 | QEMU           | Yes                            |
-| Docker Desktop | No                             |
-| HyperKit       | No                             |
 | WSL2           | No                             |
 
 ## Built With
