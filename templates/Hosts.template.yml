@@ -259,33 +259,24 @@ hosts:
         {% endfor %}
       {% endif %}
       {% else %}
-      # Package default — rendered only when the wizard sends no disks
+      # Package default — rendered only when the wizard sends no disks.
+      # No size (the box image's own size governs) and no baked placement
+      # (absent pool/controller/port = the agent's own frozen defaults).
       boot:
         type: template
-        size: 100G
         volume_name: boot
         mount: /
-        {% if settings.provider_type | default("virtualbox") == "zone" %}
-        pool: Array-1
-        dataset: zones
-        {% endif %}
 
       additional_disks:
         -
           type: blank
-          size: 50.0G
+          size: 50G
           sparse: true
           volume_name: disk1
           mount: /local
           filesystem: xfs
           device: vdb
-          {% if settings.provider_type | default("virtualbox") == "zone" %}
-          pool: Array-1
-          dataset: zones
-          {% else %}
-          port: 5
           driver: virtio-scsi
-          {% endif %}
       {% endif %}
 
     provisioning:
