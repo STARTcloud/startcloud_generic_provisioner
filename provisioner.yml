@@ -8,11 +8,64 @@ metadata:
     groups:
       - name: ssl
         label: SSL
+      - name: packages
+        label: Packages
+      - name: proxy
+        label: Download Proxy
+        advanced: true
+      - name: debug
+        label: Debugging
+        advanced: true
     fields:
       - name: CERT_SELFSIGNED
         label: Use Self-Signed Certificate
         type: checkbox
         group: ssl
+        default: true
+      - name: LETSENCRYPT_ENABLED
+        label: Use Let's Encrypt
+        type: checkbox
+        group: ssl
+        default: false
+      - name: LETSENCRYPT_STAGING_ENABLED
+        label: Use Let's Encrypt Staging Environment
+        type: checkbox
+        group: ssl
+        default: false
+        show_if:
+          LETSENCRYPT_ENABLED: true
+      - name: EXTRA_PACKAGES
+        label: Extra Packages
+        type: multiselect
+        group: packages
+        default: [htop]
+        options: [htop, tmux, vim, curl, wget, ncdu, iotop]
+      - name: USE_PROXY
+        label: Use HTTP Proxy for Downloads
+        type: checkbox
+        group: proxy
+        default: false
+      - name: PROXY_SERVER
+        label: Proxy Server
+        type: text
+        group: proxy
+        required: true
+        show_if:
+          USE_PROXY: true
+      - name: PROXY_PORT
+        label: Proxy Port
+        type: number
+        group: proxy
+        default: 3128
+        show_if:
+          USE_PROXY: true
+        validate:
+          min: 1
+          max: 65535
+      - name: DEBUG_ALL
+        label: Verbose Provisioner Debug
+        type: checkbox
+        group: debug
         default: true
   presentation: {}
   roles:

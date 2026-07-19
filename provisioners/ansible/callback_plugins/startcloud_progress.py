@@ -26,11 +26,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = "startcloud_progress"
     CALLBACK_NEEDS_ENABLED = True
 
-    # Infrastructure roles that are not user-facing provisioning steps. The
-    # legacy progress role is being retired; it is filtered here so the bar
-    # reads correctly while both mechanisms coexist during the transition.
-    _EXCLUDED_ROLES = {"progress", "startcloud.startcloud_roles.progress"}
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._total = 0
@@ -78,11 +73,11 @@ class CallbackModule(CallbackBase):
             names = [r.get_name() for r in play.get_roles()]
         except Exception:
             names = []
-        self._total = len([n for n in names if n not in self._EXCLUDED_ROLES])
+        self._total = len(names)
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         ident, name = self._role_ident(task)
-        if not ident or not name or name in self._EXCLUDED_ROLES or ident == self._current:
+        if not ident or not name or ident == self._current:
             return
         # A new role invocation has begun. Under the linear strategy the
         # previous one has finished, so credit it complete now; the invocation

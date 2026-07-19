@@ -384,21 +384,33 @@ hosts:
       #  installer_url_pass: "XXXXXXXXXXXX"
 
       ## Provisioner Debug
-      debug_all: true
+      debug_all: {{ DEBUG_ALL | default(true) }}
 
       ## SSL
       selfsigned_enabled: {{ CERT_SELFSIGNED }}
       haproxy_ssl_redirect: true
-      letsencrypt_enabled: false
-      letsencrypt_staging_enabled: false
+      letsencrypt_enabled: {{ LETSENCRYPT_ENABLED | default(false) }}
+      letsencrypt_staging_enabled: {{ LETSENCRYPT_STAGING_ENABLED | default(false) }}
 
       ## Use Proxy for downloads and updates
-      use_proxy: false
+      use_proxy: {{ USE_PROXY | default(false) }}
+      {% if USE_PROXY %}
+      proxy_server: {{ PROXY_SERVER }}
+      proxy_port: {{ PROXY_PORT | default(3128) }}
+      {% else %}
       proxy_server: 255.255.255.255
       proxy_port: 3128
+      {% endif %}
 
       ## Extra Packages
-      extra_packages: ['htop']
+      {% if EXTRA_PACKAGES %}
+      extra_packages:
+        {% for package in EXTRA_PACKAGES %}
+        - {{ package }}
+        {% endfor %}
+      {% else %}
+      extra_packages: []
+      {% endif %}
 
       ## Hosts entries for /etc/hosts ## Really only needed for Standalone
       #etc_hosts_entries:
