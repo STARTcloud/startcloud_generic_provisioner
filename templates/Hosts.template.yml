@@ -292,6 +292,7 @@ hosts:
               -
                 description: "This playbook imports Hosts.yml variables into a generated playbook: /vagrant/ansible/playbook.yml"
                 playbook: ansible/generate-playbook.yml
+                config_file: /vagrant/ansible/ansible.cfg
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
@@ -304,6 +305,7 @@ hosts:
               -
                 description: "This playbook configures the machine using the generated playbook: /vagrant/ansible/playbook.yml"
                 playbook: ansible/playbook.yml
+                config_file: /vagrant/ansible/ansible.cfg
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
@@ -318,6 +320,7 @@ hosts:
               -
                 description: "This playbook configures the machine for roles tagged as always, using the generated playbook: /vagrant/ansible/playbook.yml"
                 playbook: ansible/always-playbook.yml
+                config_file: /vagrant/ansible/ansible.cfg
                 ansible_python_interpreter: /usr/bin/python3
                 compatibility_mode: 2.0
                 install_mode: pip
