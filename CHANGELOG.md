@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.0...startcloud_generic_provisioner/v0.2.1) (2026-07-19)
+
+
+### Bug Fixes
+
+* setting Ansible configurations ([b76a747](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/b76a7472523cdb14cd9823264666259908957bd5))
+
 ## [0.2.0](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.32...startcloud_generic_provisioner/v0.2.0) (2026-07-19)
 
 
