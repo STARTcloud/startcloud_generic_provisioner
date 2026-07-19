@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.32...startcloud_generic_provisioner/v0.2.0) (2026-07-19)
+
+
+### Features
+
+* cleaning up old progress role stuff ([e6191d4](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/e6191d4a0183be37c5f62020fd9bd72f77c897d8))
+
+
+### Bug Fixes
+
+* installers folder ([50e6bc8](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/50e6bc8af3e31897a1c0c61d59a9746f7b020513))
+* releases ([4ce5838](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/4ce5838a1804ce9af09219997ca189797b34cc7b))
+
 ## [0.1.32](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.1.31...startcloud_generic_provisioner/v0.1.32) (2026-07-17)
 
 

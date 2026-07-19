@@ -1,5 +1,5 @@
 name: startcloud_generic_provisioner
-version: 0.1.32
+version: 0.2.0
 label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud
@@ -38,8 +38,16 @@ metadata:
         label: Extra Packages
         type: multiselect
         group: packages
-        default: [htop]
-        options: [htop, tmux, vim, curl, wget, ncdu, iotop]
+        default:
+          - htop
+        options:
+          - htop
+          - tmux
+          - vim
+          - curl
+          - wget
+          - ncdu
+          - iotop
       - name: USE_PROXY
         label: Use HTTP Proxy for Downloads
         type: checkbox
