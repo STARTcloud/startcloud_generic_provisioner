@@ -110,7 +110,7 @@ hosts:
         gateway: {{ network.gateway }}
         autoconf: {{ network.autoconf | default(false) }}
         vlan: {{ network.vlan }}
-        dhcp4: {{ network.dhcp4 | default(false) }}
+        dhcp4: {{ network.dhcp4 | default(true) }}
         dhcp6: {{ network.dhcp6 | default(false) }}
         is_control: {{ network.is_control | default(false) }}
         route: {{ network.route | default("default") }}
