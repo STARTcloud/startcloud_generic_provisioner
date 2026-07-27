@@ -1,19 +1,7 @@
 name: Molecule
 
-# Runs the startcloud_roles collection's molecule scenarios for the roles this
-# provisioner declares in provisioner.yml (metadata.roles). The scenarios live
-# in the collection submodule (roles/<name>/molecule/default) and use the
-# docker driver on geerlingguy systemd images, so they run directly on the
-# ubuntu-latest runner. Weekly + manual: the full matrix is too heavy to gate
-# every PR, and the scenarios test the collection, not this repo's diffs.
-#
-# Declared roles WITHOUT a scenario (excluded from the matrix): bigbluebutton,
-# greenbone, kubernetes, remote_access, startcloud_theme, xrdp.
-
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * 1'
+  workflow_call:
 
 permissions:
   contents: read

@@ -1,8 +1,8 @@
 name: CI
 
 # Reusable CI. Called by release-please.yml on push to main, and run directly on
-# every PR. Runs ansible-lint (strict), then chains CodeQL — same layout as
-# hyperweaver-docs / hyperweaver-server / hyperweaver-ui.
+# every PR. Runs ansible-lint (strict), then chains CodeQL and the molecule
+# matrix — same layout as hyperweaver-docs / hyperweaver-server / hyperweaver-ui.
 
 on:
   workflow_call:
@@ -43,3 +43,8 @@ jobs:
     name: CodeQL
     needs: [ansible-lint]
     uses: ./.github/workflows/codeql.yml
+
+  molecule-tests:
+    name: Molecule
+    needs: [ansible-lint]
+    uses: ./.github/workflows/molecule.yml
