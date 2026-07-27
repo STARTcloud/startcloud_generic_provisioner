@@ -6,6 +6,8 @@ author: STARTcloud
 metadata:
   configuration:
     groups:
+      - name: provider
+        label: Provider
       - name: ssl
         label: SSL
       - name: packages
@@ -17,6 +19,19 @@ metadata:
         label: Debugging
         advanced: true
     fields:
+      - name: VAGRANT_PROVIDER
+        label: Vagrant Provider
+        tooltip: >-
+          Hypervisor provider the machine is created on — VirtualBox on
+          desktops, Bhyve/zones on illumos hosts
+        type: select
+        group: provider
+        default: virtualbox
+        options:
+          - label: VirtualBox
+            value: virtualbox
+          - label: Bhyve/Zones (illumos)
+            value: zones
       - name: CERT_SELFSIGNED
         label: Use Self-Signed Certificate
         tooltip: Generate a self-signed certificate for this server's web services

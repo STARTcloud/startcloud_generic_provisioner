@@ -15,6 +15,10 @@
                 {
                     "type": "generic",
                     "path": "templates/Hosts.template.yml"
+                },
+                {
+                    "type": "generic",
+                    "path": "examples/Hosts.yml"
                 }
             ],
             "prerelease": false,

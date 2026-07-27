@@ -8,7 +8,9 @@ support-bundle.zip
 # Don't Include Vagrant support files
 .vagrant
 id_rsa
-Hosts.yml
+# Anchored: only the root working copy — examples/Hosts.yml IS committed
+# (the catalog's gold.example_hosts rule reads it from the release archive)
+/Hosts.yml
 results.yml
 
 # The core_provisioner driver is fetched at build/bootstrap from the release
