@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.3...startcloud_generic_provisioner/v0.2.4) (2026-07-27)
+
+
+### Bug Fixes
+
+* Getting that Gold ([e83d79a](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/e83d79a8cacaf54613305aec48b88d96b460a4ac))
+
 ## [0.2.3](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.2...startcloud_generic_provisioner/v0.2.3) (2026-07-27)
 
 
