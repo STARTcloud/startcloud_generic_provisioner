@@ -55,7 +55,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install molecule
-        run: pip install molecule molecule-plugins[docker] ansible-core
+        run: pip install molecule molecule-plugins[docker] ansible-core netaddr
 
       - name: Run molecule test
         working-directory: provisioners/ansible_collections/startcloud/startcloud_roles/roles/${{ matrix.role }}
