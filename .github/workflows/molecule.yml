@@ -1,0 +1,77 @@
+name: Molecule
+
+# Runs the startcloud_roles collection's molecule scenarios for the roles this
+# provisioner declares in provisioner.yml (metadata.roles). The scenarios live
+# in the collection submodule (roles/<name>/molecule/default) and use the
+# docker driver on geerlingguy systemd images, so they run directly on the
+# ubuntu-latest runner. Weekly + manual: the full matrix is too heavy to gate
+# every PR, and the scenarios test the collection, not this repo's diffs.
+#
+# Declared roles WITHOUT a scenario (excluded from the matrix): bigbluebutton,
+# greenbone, kubernetes, remote_access, startcloud_theme, xrdp.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: Molecule (${{ matrix.role }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        role:
+          - asterisk
+          - bottles
+          - composer
+          - docker
+          - drupal
+          - frigate
+          - graylog
+          - guacamole
+          - haproxy
+          - mariadb
+          - mattermost
+          - mrtg
+          - mumble_web
+          - nextcloud
+          - package_repository_server
+          - php_versions
+          - phpmyadmin
+          - quick_start
+          - quick_start_html5
+          - ruby
+          - sdkman_gradle
+          - sdkman_install
+          - sdkman_java
+          - sdkman_maven
+          - tomcat
+          - vagrant_readme
+          - vaultwarden
+          - zfs_unlock_service
+          - zrepl
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install molecule
+        run: pip install molecule molecule-plugins[docker] ansible-core
+
+      - name: Run molecule test
+        working-directory: provisioners/ansible_collections/startcloud/startcloud_roles/roles/${{ matrix.role }}
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        run: molecule test
