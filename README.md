@@ -101,7 +101,7 @@ See the [open issues](https://github.com/STARTcloud/startcloud_generic_provision
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://www.prominic.net) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Authors
 * **Joel Anderson** - *Initial work* - [JoelProminic](https://github.com/JoelProminic)

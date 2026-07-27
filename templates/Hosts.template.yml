@@ -167,9 +167,6 @@ hosts:
         {% if disks.boot.filesystem %}
         filesystem: {{ disks.boot.filesystem }}
         {% endif %}
-        {% if disks.boot.device %}
-        device: {{ disks.boot.device }}
-        {% endif %}
         {% if disks.boot.force %}
         force: true
         {% endif %}
@@ -213,9 +210,6 @@ hosts:
           {% endif %}
           {% if disk.filesystem %}
           filesystem: {{ disk.filesystem }}
-          {% endif %}
-          {% if disk.device %}
-          device: {{ disk.device }}
           {% endif %}
           {% if disk.force %}
           force: true
@@ -275,7 +269,6 @@ hosts:
           volume_name: disk1
           mount: /local
           filesystem: xfs
-          device: vdb
           driver: virtio-scsi
       {% endif %}
 

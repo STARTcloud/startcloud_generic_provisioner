@@ -19,16 +19,23 @@ metadata:
     fields:
       - name: CERT_SELFSIGNED
         label: Use Self-Signed Certificate
+        tooltip: Generate a self-signed certificate for this server's web services
         type: checkbox
         group: ssl
         default: true
       - name: LETSENCRYPT_ENABLED
         label: Use Let's Encrypt
+        tooltip: >-
+          Request a certificate from Let's Encrypt instead of using a
+          self-signed one — requires a publicly resolvable hostname
         type: checkbox
         group: ssl
         default: false
       - name: LETSENCRYPT_STAGING_ENABLED
         label: Use Let's Encrypt Staging Environment
+        tooltip: >-
+          Use the Let's Encrypt staging CA to avoid production rate limits while
+          testing
         type: checkbox
         group: ssl
         default: false
@@ -36,6 +43,7 @@ metadata:
           LETSENCRYPT_ENABLED: true
       - name: EXTRA_PACKAGES
         label: Extra Packages
+        tooltip: Additional Debian packages installed during provisioning
         type: multiselect
         group: packages
         default:
@@ -50,11 +58,13 @@ metadata:
           - iotop
       - name: USE_PROXY
         label: Use HTTP Proxy for Downloads
+        tooltip: Route package downloads and updates through an HTTP proxy
         type: checkbox
         group: proxy
         default: false
       - name: PROXY_SERVER
         label: Proxy Server
+        tooltip: Hostname or IP address of the HTTP proxy
         type: text
         group: proxy
         required: true
@@ -62,6 +72,7 @@ metadata:
           USE_PROXY: true
       - name: PROXY_PORT
         label: Proxy Port
+        tooltip: TCP port of the HTTP proxy
         type: number
         group: proxy
         default: 3128
@@ -72,12 +83,15 @@ metadata:
           max: 65535
       - name: DEBUG_ALL
         label: Verbose Provisioner Debug
+        tooltip: Enable verbose output for all Ansible provisioning tasks
         type: checkbox
         group: debug
         default: true
   presentation: {}
   roles:
     - name: asterisk
+      label: Asterisk PBX
+      description: Installs the Asterisk PBX telephony server
       depends_on:
         - setup
         - hostname
@@ -87,112 +101,186 @@ metadata:
         - sdkman_java
         - fail2ban
     - name: bigbluebutton
+      label: BigBlueButton
+      description: Installs the BigBlueButton web conferencing platform on Docker
       depends_on:
         - certbot
         - docker
     - name: bottles
+      label: Bottles
+      description: Installs Bottles via Flatpak for running Windows applications
       depends_on:
         - flatpak
     - name: composer
+      label: PHP Composer
+      description: Installs the Composer dependency manager for PHP
       depends_on:
         - php
     - name: docker
+      label: Docker
+      description: Installs the Docker container engine
     - name: drupal
+      label: Drupal
+      description: Installs the Drupal content management system on PHP, Composer and MySQL
       depends_on:
         - php
         - composer
         - mysql
     - name: frigate
+      label: Frigate NVR
+      description: Installs the Frigate network video recorder in Docker
       depends_on:
         - docker
     - name: graylog
+      label: Graylog
+      description: Installs the Graylog log management server backed by MongoDB
       depends_on:
         - mongodb
     - name: greenbone
+      label: Greenbone Vulnerability Management
+      description: Installs the Greenbone (OpenVAS) vulnerability scanner in Docker
       depends_on:
         - docker
     - name: guacamole
+      label: Apache Guacamole
+      description: >-
+        Installs the Apache Guacamole clientless remote desktop gateway on
+        Tomcat and MySQL
       depends_on:
         - tomcat
         - mysql
     - name: haproxy
+      label: HAProxy
+      description: >-
+        Installs HAProxy as the TLS-terminating reverse proxy in front of the
+        machine's web services
       depends_on:
         - ssl
     - name: kubernetes
+      label: Kubernetes
+      description: Installs Kubernetes tooling on top of the Docker engine
       depends_on:
         - docker
     - name: mariadb
+      label: MariaDB
+      description: Installs the MariaDB database server
     - name: mattermost
+      label: Mattermost
+      description: Installs the Mattermost team messaging server on Nginx and MySQL
       depends_on:
         - mysql
         - nginx
     - name: mrtg
+      label: MRTG
+      description: Installs the MRTG network traffic grapher fed by SNMP
       depends_on:
         - snmp
     - name: mumble_web
+      label: Mumble Web
+      description: Installs the web-based Mumble voice chat client in Docker
       depends_on:
         - docker
     - name: nextcloud
+      label: Nextcloud
+      description: >-
+        Installs the Nextcloud file sharing and collaboration platform on
+        Nginx, PHP and MySQL
       depends_on:
         - mysql
         - nginx
         - php
     - name: package_repository_server
+      label: Package Repository Server
+      description: Serves locally built Debian packages as an apt repository
       depends_on:
         - debian_packager
     - name: php_versions
+      label: PHP Versions
+      description: Installs additional PHP versions alongside the base PHP install
       depends_on:
         - php
     - name: phpmyadmin
+      label: phpMyAdmin
+      description: Installs the phpMyAdmin web interface for MySQL on Nginx and PHP
       depends_on:
         - mysql
         - nginx
         - php
     - name: quick_start
+      label: Quick Start Page
+      description: Serves the provisioning status and welcome page during and after setup
       depends_on:
         - service_user
         - cockpit
         - ssl
     - name: quick_start_html5
+      label: Quick Start Page (HTML5)
+      description: Serves the HTML5 variant of the provisioning status and welcome page
       depends_on:
         - service_user
         - cockpit
         - ssl
     - name: remote_access
+      label: Remote Access
+      description: Configures remote access services and their firewall rules
       depends_on:
         - firewall
     - name: ruby
+      label: Ruby
+      description: Installs the Ruby runtime for the service user
       depends_on:
         - service_user
     - name: sdkman_gradle
+      label: Gradle (SDKMAN)
+      description: Installs the Gradle build tool via SDKMAN
       depends_on:
         - sdkman_install
     - name: sdkman_install
+      label: SDKMAN
+      description: Installs the SDKMAN SDK manager for the service user
       depends_on:
         - service_user
     - name: sdkman_java
+      label: Java (SDKMAN)
+      description: Installs a Java JDK via SDKMAN
       depends_on:
         - sdkman_install
     - name: sdkman_maven
+      label: Maven (SDKMAN)
+      description: Installs Apache Maven via SDKMAN
       depends_on:
         - sdkman_install
     - name: startcloud_theme
+      label: STARTcloud Theme
+      description: Applies the STARTcloud boot and console theme
       depends_on:
         - serial
     - name: tomcat
+      label: Apache Tomcat
+      description: Installs the Apache Tomcat application server on an SDKMAN-managed Java
       depends_on:
         - sdkman_install
         - sdkman_java
     - name: vagrant_readme
+      label: Vagrant README
+      description: Generates a README on the guest describing access details for this machine
     - name: vaultwarden
+      label: Vaultwarden
+      description: Installs the Vaultwarden password manager server in Docker
       depends_on:
         - docker
     - name: xrdp
+      label: xRDP
+      description: Installs the xRDP remote desktop server on the GNOME desktop
       depends_on:
         - desktop_gnome
     - name: zfs_unlock_service
+      label: ZFS Unlock Service
+      description: Installs a boot-time service that unlocks encrypted ZFS datasets
       depends_on:
         - zfs
     - name: zrepl
+      label: zrepl
+      description: Installs the zrepl ZFS snapshot and replication daemon
       depends_on:
         - zfs

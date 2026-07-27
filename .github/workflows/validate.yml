@@ -1,0 +1,28 @@
+# Author-side validation (the HACS pattern): run the provisioner-catalog's
+# reusable validation action against this repository's PUBLISHED releases,
+# exactly as the catalog's data job sees them. Green runs here are part of
+# the admission checklist for sources.yml.
+
+name: Validate
+
+# Validation reads PUBLISHED releases only — the working tree is irrelevant,
+# so push/PR triggers would just re-check the same releases on every commit
+# (and fail constantly until the first conforming release exists). Run it
+# when a release is published, on the daily schedule, and by hand.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    name: Provisioner Catalog Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run provisioner-catalog validation
+        uses: STARTcloud/provisioner-catalog@main
