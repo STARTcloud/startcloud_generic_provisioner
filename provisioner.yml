@@ -1,5 +1,5 @@
 name: startcloud_generic_provisioner
-version: 0.2.2
+version: 0.2.3
 label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud
@@ -183,8 +183,8 @@ metadata:
     - name: nextcloud
       label: Nextcloud
       description: >-
-        Installs the Nextcloud file sharing and collaboration platform on
-        Nginx, PHP and MySQL
+        Installs the Nextcloud file sharing and collaboration platform on Nginx,
+        PHP and MySQL
       depends_on:
         - mysql
         - nginx
@@ -263,7 +263,9 @@ metadata:
         - sdkman_java
     - name: vagrant_readme
       label: Vagrant README
-      description: Generates a README on the guest describing access details for this machine
+      description: >-
+        Generates a README on the guest describing access details for this
+        machine
     - name: vaultwarden
       label: Vaultwarden
       description: Installs the Vaultwarden password manager server in Docker

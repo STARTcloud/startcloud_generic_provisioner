@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.2...startcloud_generic_provisioner/v0.2.3) (2026-07-27)
+
+
+### Bug Fixes
+
+* adding missing Github Fluff and updating validation ([feadf8e](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/feadf8ec374c2a37ff1f085825241f7c6e65ddec))
+* updating submodule ([13b7b10](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/13b7b1082a3b4cb6bbb564a5d7a99df712e562c4))
+
 ## [0.2.2](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.1...startcloud_generic_provisioner/v0.2.2) (2026-07-19)
 
 
