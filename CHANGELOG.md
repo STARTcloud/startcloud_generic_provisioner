@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.4...startcloud_generic_provisioner/v0.3.0) (2026-07-27)
+
+
+### Features
+
+* bump startcloud_roles with molecule scenarios and add molecule CI ([cd0f218](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/cd0f218461b7bc0181ab51425d1c8a77dc9dd92f))
+
+
+### Bug Fixes
+
+* fixing more AI Slop ([f312d26](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/f312d26f4e848cc21a6b53754d2783530b7439be))
+* molecuel test ([86d1bcc](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/86d1bccb900db8682c2fb191915060bf8f6a9392))
+
 ## [0.2.4](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.3...startcloud_generic_provisioner/v0.2.4) (2026-07-27)
 
 
