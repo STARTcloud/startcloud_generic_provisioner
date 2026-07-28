@@ -59,31 +59,39 @@ runs:
         tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C .
         test -f driver/Hosts.rb || { echo "driver/Hosts.rb missing after extraction" >&2; exit 1; }
 
-    # The roles collection is fetched from the startcloud_roles release pinned
-    # in collection.version — the repo no longer vendors it as a submodule. The
-    # tarball is the ansible-galaxy collection build artifact, so its content
-    # sits at the archive root and extracts into the collection path the guest's
-    # ansible.cfg expects.
-    - name: Fetch pinned roles collection
+    # Role collections are fetched from the releases pinned in
+    # collections/<namespace>.<name>.version files — nothing is vendored. The
+    # filename names the collection (artifact prefix + extract path); the
+    # file's single line is "<owner>/<repo> <tag>", so collections from any
+    # org/namespace mix pin independently. Each tarball is the ansible-galaxy
+    # collection build artifact (content at archive root), extracted into the
+    # collection path the guest's ansible.cfg expects.
+    - name: Fetch pinned roles collections
       shell: bash
       run: |
-        TAG="$(tr -d '[:space:]' < collection.version)"
-        VERSION="${TAG#v}"
-        ARCHIVE="startcloud-startcloud_roles-${VERSION}.tar.gz"
-        BASE="https://github.com/STARTcloud/startcloud_roles/releases/download/${TAG}"
-        DEST="provisioners/ansible_collections/startcloud/startcloud_roles"
-        echo "Fetching roles collection ${TAG}"
-        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
-        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
-        EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
-        ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
-        if [ "$EXPECTED" != "$ACTUAL" ]; then
-          echo "Checksum mismatch for $ARCHIVE: expected $EXPECTED, got $ACTUAL" >&2
-          exit 1
-        fi
-        mkdir -p "$DEST"
-        tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C "$DEST"
-        test -d "$DEST/roles/hostname" || { echo "$DEST/roles/hostname missing after extraction" >&2; exit 1; }
+        for PIN in collections/*.version; do
+          BASENAME="${PIN##*/}"
+          BASENAME="${BASENAME%.version}"
+          NAMESPACE="${BASENAME%%.*}"
+          NAME="${BASENAME#*.}"
+          read -r REPO TAG < "$PIN"
+          VERSION="${TAG#v}"
+          ARCHIVE="${NAMESPACE}-${NAME}-${VERSION}.tar.gz"
+          BASE="https://github.com/${REPO}/releases/download/${TAG}"
+          DEST="provisioners/ansible_collections/${NAMESPACE}/${NAME}"
+          echo "Fetching ${NAMESPACE}.${NAME} ${TAG} from ${REPO}"
+          curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
+          curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
+          EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
+          ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "Checksum mismatch for $ARCHIVE: expected $EXPECTED, got $ACTUAL" >&2
+            exit 1
+          fi
+          mkdir -p "$DEST"
+          tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C "$DEST"
+          test -f "$DEST/MANIFEST.json" || { echo "$DEST/MANIFEST.json missing after extraction" >&2; exit 1; }
+        done
 
     - name: Stage registry-shaped tree and build seed archive
       id: stage

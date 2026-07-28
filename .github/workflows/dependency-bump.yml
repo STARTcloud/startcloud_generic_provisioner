@@ -1,12 +1,14 @@
 name: Dependency Bump
 
-# Keeps this provisioner's two external dependencies current, as PRs — never
+# Keeps this provisioner's external dependencies current, as PRs — never
 # direct pushes — so the CI gate proves every bump before it lands:
-#   startcloud_roles   collection.version → pinned release tag rewritten
-#   core_provisioner   driver.version     → pinned release tag rewritten
-# Both dependencies are release-consumed (fetched + sha256-verified by
-# .github/actions/stage-seed); molecule testing gates the collection releases
-# in the startcloud_roles repo itself.
+#   core_provisioner    driver.version                          → tag rewritten
+#   role collections    collections/<namespace>.<name>.version → tag rewritten
+#     (each pin's single line is "<owner>/<repo> <tag>"; collections pin and
+#     bump independently — a sender is matched to the pin file naming it)
+# All dependencies are release-consumed (fetched + sha256-verified by
+# .github/actions/stage-seed); molecule testing gates collection releases in
+# the collection repos themselves.
 #
 # Two entry paths, one bump implementation:
 #   repository_dispatch (event_type: dependency-update) — sent by the
@@ -68,24 +70,26 @@ jobs:
           DEP_REPO: ${{ github.event.client_payload.repo }}
           DEP_TAG: ${{ github.event.client_payload.tag }}
         run: |
-          # Parent-side map: the payload names the sender, this repo decides
-          # what a bump from that sender means. New dependencies are added
-          # here, nowhere else. Content integrity is enforced at fetch time by
-          # stage-seed's sha256 verification against the release sidecar.
+          # The payload names the sender; this repo decides what a bump from
+          # that sender means. The driver is the one special case — any other
+          # sender must be named as source repo inside a collection pin file.
+          # Content integrity is enforced at fetch time by stage-seed's sha256
+          # verification against the release sidecar.
           case "$DEP_REPO" in
-            STARTcloud/startcloud_roles)
-              DEP_NAME="startcloud_roles"
-              printf '%s\n' "$DEP_TAG" > collection.version
-              git add collection.version
-              ;;
             STARTcloud/core_provisioner)
               DEP_NAME="core_provisioner"
               printf '%s\n' "$DEP_TAG" > driver.version
               git add driver.version
               ;;
             *)
-              echo "Unknown dependency repo: $DEP_REPO" >&2
-              exit 1
+              PIN="$(grep -l "^$DEP_REPO " collections/*.version || true)"
+              if [ -z "$PIN" ]; then
+                echo "Unknown dependency repo: $DEP_REPO — no collection pin names it" >&2
+                exit 1
+              fi
+              DEP_NAME="${DEP_REPO##*/}"
+              printf '%s %s\n' "$DEP_REPO" "$DEP_TAG" > "$PIN"
+              git add "$PIN"
               ;;
           esac
           if git diff --cached --quiet; then
@@ -167,12 +171,14 @@ jobs:
             echo "core_provisioner pin current ($CORE_PINNED)"
           fi
 
-          # startcloud_roles: pin is the tag in collection.version.
-          ROLES_LATEST="$(gh release view --repo STARTcloud/startcloud_roles --json tagName --jq .tagName)"
-          ROLES_PINNED="$(tr -d '[:space:]' < collection.version)"
-          if [ "$ROLES_LATEST" != "$ROLES_PINNED" ]; then
-            ROLES_SHA="$(gh api "repos/STARTcloud/startcloud_roles/commits/$ROLES_LATEST" --jq .sha)"
-            dispatch "STARTcloud/startcloud_roles" "$ROLES_LATEST" "$ROLES_SHA"
-          else
-            echo "startcloud_roles pin current ($ROLES_PINNED)"
-          fi
+          # Role collections: every pin in collections/ is "<owner>/<repo> <tag>".
+          for PIN in collections/*.version; do
+            read -r REPO PINNED < "$PIN"
+            LATEST="$(gh release view --repo "$REPO" --json tagName --jq .tagName)"
+            if [ "$LATEST" != "$PINNED" ]; then
+              SHA="$(gh api "repos/$REPO/commits/$LATEST" --jq .sha)"
+              dispatch "$REPO" "$LATEST" "$SHA"
+            else
+              echo "$REPO pin current ($PINNED)"
+            fi
+          done
