@@ -1,0 +1,178 @@
+name: Dependency Bump
+
+# Keeps this provisioner's two external dependencies current, as PRs — never
+# direct pushes — so the CI gate proves every bump before it lands:
+#   startcloud_roles   collection.version → pinned release tag rewritten
+#   core_provisioner   driver.version     → pinned release tag rewritten
+# Both dependencies are release-consumed (fetched + sha256-verified by
+# .github/actions/stage-seed); molecule testing gates the collection releases
+# in the startcloud_roles repo itself.
+#
+# Two entry paths, one bump implementation:
+#   repository_dispatch (event_type: dependency-update) — sent by the
+#     dependency repos' release-please workflows the moment a release is
+#     published, payload {repo, tag, sha}.
+#   schedule / workflow_dispatch — weekly reconcile that compares the pins
+#     against each dependency's latest release and re-dispatches
+#     dependency-update to this repo for anything stale. Covers missed
+#     dispatches and works alone until the dependency repos ship their
+#     notify jobs.
+#
+# The merged bump commit is conventional (fix: ...), so release-please picks
+# it up on main exactly like any hand-written fix — the release flow is
+# untouched. Bump branches are named bump/<dep>; dev-release.yml keys its PR
+# prereleases off that prefix.
+#
+# Tokens: everything cross-repo or PR-creating uses a GitHub App token, NOT
+# GITHUB_TOKEN — PRs and dispatches created with GITHUB_TOKEN do not trigger
+# workflows (GitHub's recursion guard), which would leave bump PRs with no CI
+# and auto-merge waiting forever. Required org secrets:
+#   BOT_APP_ID       GitHub App id (App needs contents:write + pull-requests:write,
+#   BOT_PRIVATE_KEY  installed on this repo and every dependency repo)
+
+on:
+  repository_dispatch:
+    types: [dependency-update]
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-bump-${{ github.event.client_payload.repo || 'reconcile' }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Open bump PR
+    if: ${{ github.event_name == 'repository_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app.outputs.token }}
+
+      - name: Apply the bump
+        id: apply
+        env:
+          DEP_REPO: ${{ github.event.client_payload.repo }}
+          DEP_TAG: ${{ github.event.client_payload.tag }}
+        run: |
+          # Parent-side map: the payload names the sender, this repo decides
+          # what a bump from that sender means. New dependencies are added
+          # here, nowhere else. Content integrity is enforced at fetch time by
+          # stage-seed's sha256 verification against the release sidecar.
+          case "$DEP_REPO" in
+            STARTcloud/startcloud_roles)
+              DEP_NAME="startcloud_roles"
+              printf '%s\n' "$DEP_TAG" > collection.version
+              git add collection.version
+              ;;
+            STARTcloud/core_provisioner)
+              DEP_NAME="core_provisioner"
+              printf '%s\n' "$DEP_TAG" > driver.version
+              git add driver.version
+              ;;
+            *)
+              echo "Unknown dependency repo: $DEP_REPO" >&2
+              exit 1
+              ;;
+          esac
+          if git diff --cached --quiet; then
+            echo "Already at $DEP_TAG — nothing to bump."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "dep_name=$DEP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Commit, push and open the PR
+        if: ${{ steps.apply.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          DEP_TAG: ${{ github.event.client_payload.tag }}
+          DEP_REPO: ${{ github.event.client_payload.repo }}
+          DEP_NAME: ${{ steps.apply.outputs.dep_name }}
+        run: |
+          BRANCH="bump/$DEP_NAME"
+          TITLE="fix: bump $DEP_NAME to $DEP_TAG"
+          git config user.name "startcloud-bot[bot]"
+          git config user.email "startcloud-bot[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git commit -m "$TITLE"
+          # Force-push: a stale bump branch from a superseded release is
+          # replaced, and its open PR (if any) simply retargets to the new
+          # commit.
+          git push --force origin "$BRANCH"
+          EXISTING="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
+          if [ "$EXISTING" = "0" ]; then
+            gh pr create \
+              --head "$BRANCH" \
+              --title "$TITLE" \
+              --body "Automated bump of \`$DEP_NAME\` to [$DEP_TAG](https://github.com/$DEP_REPO/releases/tag/$DEP_TAG). Merging releases it through the normal release-please flow."
+          else
+            gh pr edit "$BRANCH" --title "$TITLE"
+          fi
+          # Requires 'Allow auto-merge' + branch protection with required
+          # checks on main; without them this warns instead of failing so the
+          # PR still exists for a manual merge.
+          gh pr merge "$BRANCH" --auto --squash \
+            || echo "::warning::auto-merge unavailable — merge the bump PR manually"
+
+  reconcile:
+    name: Reconcile pins against latest releases
+    if: ${{ github.event_name != 'repository_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Re-dispatch dependency-update for stale pins
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          dispatch() {
+            gh api "repos/${{ github.repository }}/dispatches" \
+              -f event_type=dependency-update \
+              -f "client_payload[repo]=$1" \
+              -f "client_payload[tag]=$2" \
+              -f "client_payload[sha]=$3"
+            echo "Dispatched bump: $1 → $2"
+          }
+
+          # core_provisioner: pin is the tag in driver.version.
+          CORE_LATEST="$(gh release view --repo STARTcloud/core_provisioner --json tagName --jq .tagName)"
+          CORE_PINNED="$(tr -d '[:space:]' < driver.version)"
+          if [ "$CORE_LATEST" != "$CORE_PINNED" ]; then
+            CORE_SHA="$(gh api "repos/STARTcloud/core_provisioner/commits/$CORE_LATEST" --jq .sha)"
+            dispatch "STARTcloud/core_provisioner" "$CORE_LATEST" "$CORE_SHA"
+          else
+            echo "core_provisioner pin current ($CORE_PINNED)"
+          fi
+
+          # startcloud_roles: pin is the tag in collection.version.
+          ROLES_LATEST="$(gh release view --repo STARTcloud/startcloud_roles --json tagName --jq .tagName)"
+          ROLES_PINNED="$(tr -d '[:space:]' < collection.version)"
+          if [ "$ROLES_LATEST" != "$ROLES_PINNED" ]; then
+            ROLES_SHA="$(gh api "repos/STARTcloud/startcloud_roles/commits/$ROLES_LATEST" --jq .sha)"
+            dispatch "STARTcloud/startcloud_roles" "$ROLES_LATEST" "$ROLES_SHA"
+          else
+            echo "startcloud_roles pin current ($ROLES_PINNED)"
+          fi

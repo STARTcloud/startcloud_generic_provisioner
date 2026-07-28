@@ -1,0 +1,123 @@
+name: 'Stage Seed Archive'
+description: >-
+  Fetches the core driver release pinned in driver.version and the
+  startcloud_roles collection release pinned in collection.version (both
+  sha256-verified), stages the registry-shaped provisioner tree
+  (<name>/<version>/...), and builds the seed archive(s) + .sha256 sidecars
+  the provisioner-catalog contract requires. Shared by build-provisioner.yml
+  (releases, with the version-less "latest" alias) and dev-release.yml (PR
+  prereleases, versioned archive only). The caller checks out the ref; this
+  action fetches the two pinned dependencies into the workspace and stages it.
+
+inputs:
+  version:
+    description: >-
+      Full artifact version. Either the release version exactly as stamped in
+      provisioner.yml (X.Y.Z), or a dev version derived from it
+      (X.Y.Z-dev.prN). The X.Y.Z base must match provisioner.yml — the action
+      refuses otherwise.
+    required: true
+  make-latest-alias:
+    description: >-
+      'true' to also produce the version-less alias archive + sidecar
+      (release builds); 'false' to skip it (dev prereleases — the
+      releases/latest/download URL ignores prereleases anyway).
+    required: false
+    default: 'true'
+
+outputs:
+  artifact:
+    description: Filename of the versioned seed archive
+    value: ${{ steps.stage.outputs.artifact }}
+  latest_artifact:
+    description: Filename of the version-less alias archive (empty when skipped)
+    value: ${{ steps.stage.outputs.latest_artifact }}
+
+runs:
+  using: composite
+  steps:
+    # The core driver is NOT a submodule: it is fetched from the core_provisioner
+    # release pinned in driver.version, sha256-verified, extracted as driver/,
+    # and staged into the artifact. driver/ssls is the CANONICAL SSL tree — the
+    # document's folders[] syncs it to /secure/; there is no repo-side ssls/.
+    - name: Fetch pinned core driver
+      shell: bash
+      run: |
+        TAG="$(tr -d '[:space:]' < driver.version)"
+        VERSION="${TAG#v}"
+        ARCHIVE="core_provisioner-${VERSION}.tar.gz"
+        BASE="https://github.com/STARTcloud/core_provisioner/releases/download/${TAG}"
+        echo "Fetching core driver ${TAG}"
+        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
+        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
+        EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
+        ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
+        if [ "$EXPECTED" != "$ACTUAL" ]; then
+          echo "Checksum mismatch for $ARCHIVE: expected $EXPECTED, got $ACTUAL" >&2
+          exit 1
+        fi
+        tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C .
+        test -f driver/Hosts.rb || { echo "driver/Hosts.rb missing after extraction" >&2; exit 1; }
+
+    # The roles collection is fetched from the startcloud_roles release pinned
+    # in collection.version — the repo no longer vendors it as a submodule. The
+    # tarball is the ansible-galaxy collection build artifact, so its content
+    # sits at the archive root and extracts into the collection path the guest's
+    # ansible.cfg expects.
+    - name: Fetch pinned roles collection
+      shell: bash
+      run: |
+        TAG="$(tr -d '[:space:]' < collection.version)"
+        VERSION="${TAG#v}"
+        ARCHIVE="startcloud-startcloud_roles-${VERSION}.tar.gz"
+        BASE="https://github.com/STARTcloud/startcloud_roles/releases/download/${TAG}"
+        DEST="provisioners/ansible_collections/startcloud/startcloud_roles"
+        echo "Fetching roles collection ${TAG}"
+        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
+        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
+        EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
+        ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
+        if [ "$EXPECTED" != "$ACTUAL" ]; then
+          echo "Checksum mismatch for $ARCHIVE: expected $EXPECTED, got $ACTUAL" >&2
+          exit 1
+        fi
+        mkdir -p "$DEST"
+        tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C "$DEST"
+        test -d "$DEST/roles/hostname" || { echo "$DEST/roles/hostname missing after extraction" >&2; exit 1; }
+
+    - name: Stage registry-shaped tree and build seed archive
+      id: stage
+      shell: bash
+      env:
+        FULL_VERSION: ${{ inputs.version }}
+        MAKE_LATEST: ${{ inputs.make-latest-alias }}
+      run: |
+        # Quote-agnostic: release-please's version stamp may rewrite the line
+        # with or without quotes.
+        NAME="$(sed -nE 's/^name:[[:space:]]*"?([A-Za-z0-9._-]+)"?.*/\1/p' provisioner.yml | head -n1)"
+        VERSION="$(sed -nE 's/^version:[[:space:]]*"?([0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z.+-]*)"?.*/\1/p' provisioner.yml | head -n1)"
+        BASE_VERSION="${FULL_VERSION%%-dev.*}"
+        echo "Parsed name=$NAME version=$VERSION requested=$FULL_VERSION"
+        if [ "$VERSION" != "$BASE_VERSION" ]; then
+          echo "provisioner.yml version ($VERSION) does not match requested version base ($BASE_VERSION)" >&2
+          exit 1
+        fi
+        STAGE="$RUNNER_TEMP/seed/$NAME/$FULL_VERSION"
+        mkdir -p "$STAGE"
+        rsync -a \
+          --exclude='.git' \
+          --exclude='.github' \
+          --exclude='.gitattributes' \
+          --exclude='release-please-config.json' \
+          --exclude='.release-please-manifest.json' \
+          ./ "$STAGE/"
+        tar -czf "$NAME-$FULL_VERSION.tar.gz" -C "$RUNNER_TEMP/seed" "$NAME"
+        sha256sum "$NAME-$FULL_VERSION.tar.gz" > "$NAME-$FULL_VERSION.tar.gz.sha256"
+        echo "artifact=$NAME-$FULL_VERSION.tar.gz" >> "$GITHUB_OUTPUT"
+        if [ "$MAKE_LATEST" = "true" ]; then
+          cp "$NAME-$FULL_VERSION.tar.gz" "$NAME.tar.gz"
+          sha256sum "$NAME.tar.gz" > "$NAME.tar.gz.sha256"
+          echo "latest_artifact=$NAME.tar.gz" >> "$GITHUB_OUTPUT"
+        else
+          echo "latest_artifact=" >> "$GITHUB_OUTPUT"
+        fi

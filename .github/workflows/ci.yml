@@ -1,8 +1,9 @@
 name: CI
 
 # Reusable CI. Called by release-please.yml on push to main, and run directly on
-# every PR. Runs ansible-lint (strict), then chains CodeQL and the molecule
-# matrix — same layout as hyperweaver-docs / hyperweaver-server / hyperweaver-ui.
+# every PR. Runs ansible-lint (strict), then chains CodeQL — same layout as
+# hyperweaver-docs / hyperweaver-server / hyperweaver-ui. Molecule testing lives
+# in the startcloud_roles repo, gating the collection releases this repo pins.
 
 on:
   workflow_call:
@@ -44,7 +45,20 @@ jobs:
     needs: [ansible-lint]
     uses: ./.github/workflows/codeql.yml
 
-  molecule-tests:
-    name: Molecule
-    needs: [ansible-lint]
-    uses: ./.github/workflows/molecule.yml
+  # Single stable check name for branch protection: require only "CI OK" and
+  # every current and future job is covered through the needs chain.
+  # if: always() + the explicit fail matters — without it a failed dependency
+  # leaves this job SKIPPED, and GitHub treats a skipped required check as
+  # satisfied, so a red leg could auto-merge.
+  ci-ok:
+    name: CI OK
+    needs: [ansible-lint, codeql-analysis]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when any dependency failed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
+
+      - name: All checks green
+        run: echo "CI OK"

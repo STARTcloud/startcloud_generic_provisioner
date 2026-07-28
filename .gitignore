@@ -17,6 +17,10 @@ results.yml
 # pinned in driver.version — never committed. Its ssls/ subtree is the
 # canonical SSL location (synced to /secure/; BYO certs drop in there too).
 driver/
+
+# The startcloud_roles collection is fetched at build from the release pinned
+# in collection.version — no longer a submodule, never committed.
+provisioners/ansible_collections/startcloud/startcloud_roles/
 templates/auto-SHI-Hosts.yml
 DeployKey_rsa
 *.vdi
