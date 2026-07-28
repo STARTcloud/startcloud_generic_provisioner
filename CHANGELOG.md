@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.3.0...startcloud_generic_provisioner/v0.3.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* provisioner logo ([4f3a3e0](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/4f3a3e017e787f7fe440c0843fc5238f5e4391c6))
+* readme ([199c8fc](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/199c8fc31cc26ebf105deaa8a84a79b7001f0c50))
+* startcloud roles ([b2e076f](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/b2e076f09dbec33575b89461e2bfaf620ed8fcc6))
+* updating role var parameter scoping ([a2b63c2](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/a2b63c2196334ffc75dfea19de10ecbf3816258b))
+* updating role var parameter scoping ([d8e6eb6](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/d8e6eb6258d47b301f46e6c1c291d4e40367043a))
+* updating startcloud_roles ([de950fe](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/de950fe268f99ab1202d70f5ea65e7d8cb9b6ae0))
+
 ## [0.3.0](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.2.4...startcloud_generic_provisioner/v0.3.0) (2026-07-27)
 
 
