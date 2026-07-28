@@ -58,17 +58,22 @@
       tags:
         - {{ tag_list }}
       {% endif %}
-      {% if role.vars is defined or role.port_forwards is defined %}
+      {% if role.vars is defined %}
+      {# Role-entry vars render as role PARAMS (scoped to this role instance only). #}
+      {# The vars keyword on a roles entry is play-scoped in Ansible: one role's #}
+      {# run_tasks: false would silently disable every other role in the play. #}
+      {# Values meant to be shared across roles belong in the host-level vars block. #}
+      {% for key, value in role.vars.items() %}
+      {{ key }}: {{ value }}
+      {% endfor %}
+      {% endif %}
+      {% if role.port_forwards is defined %}
+      {# port_forwards stay play-scoped on purpose: other roles consume them, #}
+      {# e.g. domino_config reads domino_install_port_forwards for the server doc. #}
       vars:
-        {% if role.vars is defined %}
-        {% for key, value in role.vars.items() %}
-        {{ key }}: {{ value }}
-        {% endfor %}
-        {% endif %}
-        {% if role.port_forwards is defined %}
         {{ role.name }}_port_forwards:
           {% for ports in role.port_forwards %}
-            - 
+            -
               guest: {{ ports.guest }}
               host: {{ ports.host }}
               ip: {{ ports.ip }}
@@ -79,7 +84,6 @@
               proxied: {{ ports.proxied }}
               {% endif %}
           {% endfor %}
-        {% endif %}
       {% endif %}
     {% endfor %}
 
