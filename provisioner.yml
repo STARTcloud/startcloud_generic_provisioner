@@ -4,6 +4,7 @@ label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud
 icon: https://startcloud.com/brand-assets/startcloud.svg
+homepage: https://startcloud.com/
 metadata:
   configuration:
     groups:
