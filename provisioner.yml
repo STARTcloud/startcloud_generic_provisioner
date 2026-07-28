@@ -3,6 +3,7 @@ version: 0.3.0
 label: STARTcloud Generic Provisioner
 description: Generic provisioner for STARTcloud servers
 author: STARTcloud
+icon: https://startcloud.com/brand-assets/startcloud.svg
 metadata:
   configuration:
     groups:
