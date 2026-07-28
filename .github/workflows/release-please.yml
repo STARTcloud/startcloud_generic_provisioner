@@ -37,9 +37,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      # App token, not GITHUB_TOKEN: GITHUB_TOKEN-created PRs never fire
+      # pull_request workflows (recursion guard), which left the release PR's
+      # required CI OK check stuck "Expected" until someone ran it by hand.
+      # With the App token the PR is authored by startcloud-bot and CI fires
+      # on its own; releases cut with it also fire release:published
+      # (validate.yml) instead of being silently swallowed.
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
       - name: Release Please
         uses: googleapis/release-please-action@v5
         id: release
+        with:
+          token: ${{ steps.app.outputs.token }}
 
   build-provisioner:
     name: Build Provisioner Artifact
