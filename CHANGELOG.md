@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.3.3...startcloud_generic_provisioner/v0.3.4) (2026-07-28)
+
+
+### Bug Fixes
+
+* adding the homepage ([5769b17](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/5769b1710bc8f8113a1222a850180a5de2cff9cd))
+
 ## [0.3.3](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.3.2...startcloud_generic_provisioner/v0.3.3) (2026-07-28)
 
 
