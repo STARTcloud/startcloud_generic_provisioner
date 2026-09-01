@@ -1,10 +1,5 @@
 name: Release Please
 
-# Single entry point on push to main: run CI (which chains CodeQL), then
-# release-please, then — only when a release is cut — build and publish the
-# registry-shaped provisioner seed archive. Same orchestration as
-# hyperweaver-docs / hyperweaver-server / hyperweaver-ui.
-
 on:
   push:
     branches:
@@ -22,6 +17,7 @@ jobs:
   ci-checks:
     name: CI Checks
     uses: ./.github/workflows/ci.yml
+    secrets: inherit
 
   release-please:
     name: Release Please
@@ -37,17 +33,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # App token, not GITHUB_TOKEN: GITHUB_TOKEN-created PRs never fire
-      # pull_request workflows (recursion guard), which left the release PR's
-      # required CI OK check stuck "Expected" until someone ran it by hand.
-      # With the App token the PR is authored by startcloud-bot and CI fires
-      # on its own; releases cut with it also fire release:published
-      # (validate.yml) instead of being silently swallowed.
       - name: Mint App token
         id: app
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
+          client-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
 
       - name: Release Please
@@ -61,6 +51,12 @@ jobs:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     uses: ./.github/workflows/build-provisioner.yml
+    secrets: inherit
     with:
       version: ${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}.${{ needs.release-please.outputs.patch }}
       tag_name: ${{ needs.release-please.outputs.tag_name }}
+
+  validate:
+    name: Validate
+    needs: build-provisioner
+    uses: ./.github/workflows/validate.yml

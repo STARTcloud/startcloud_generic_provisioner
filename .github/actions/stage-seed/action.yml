@@ -15,8 +15,9 @@ inputs:
       Full artifact version. Either the release version exactly as stamped in
       provisioner.yml (X.Y.Z), or a dev version derived from it
       (X.Y.Z-dev.prN). The X.Y.Z base must match provisioner.yml — the action
-      refuses otherwise.
-    required: true
+      refuses otherwise. Empty means the version stamped in provisioner.yml.
+    required: false
+    default: ''
   make-latest-alias:
     description: >-
       'true' to also produce the version-less alias archive + sidecar
@@ -41,10 +42,6 @@ outputs:
 runs:
   using: composite
   steps:
-    # The core driver is NOT a submodule: it is fetched from the core_provisioner
-    # release pinned in driver.version, sha256-verified, extracted as driver/,
-    # and staged into the artifact. driver/ssls is the CANONICAL SSL tree — the
-    # document's folders[] syncs it to /secure/; there is no repo-side ssls/.
     - name: Fetch pinned core driver
       shell: bash
       env:
@@ -65,13 +62,6 @@ runs:
         tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C .
         test -f driver/Hosts.rb || { echo "driver/Hosts.rb missing after extraction" >&2; exit 1; }
 
-    # Role collections are fetched from the releases pinned in
-    # collections/<namespace>.<name>.version files — nothing is vendored. The
-    # filename names the collection (artifact prefix + extract path); the
-    # file's single line is "<owner>/<repo> <tag>", so collections from any
-    # org/namespace mix pin independently. Each tarball is the ansible-galaxy
-    # collection build artifact (content at archive root), extracted into the
-    # collection path the guest's ansible.cfg expects.
     - name: Fetch pinned roles collections
       shell: bash
       env:
@@ -106,10 +96,9 @@ runs:
         FULL_VERSION: ${{ inputs.version }}
         MAKE_LATEST: ${{ inputs.make-latest-alias }}
       run: |
-        # Quote-agnostic: release-please's version stamp may rewrite the line
-        # with or without quotes.
         NAME="$(sed -nE 's/^name:[[:space:]]*"?([A-Za-z0-9._-]+)"?.*/\1/p' provisioner.yml | head -n1)"
         VERSION="$(sed -nE 's/^version:[[:space:]]*"?([0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z.+-]*)"?.*/\1/p' provisioner.yml | head -n1)"
+        FULL_VERSION="${FULL_VERSION:-$VERSION}"
         BASE_VERSION="${FULL_VERSION%%-dev.*}"
         echo "Parsed name=$NAME version=$VERSION requested=$FULL_VERSION"
         if [ "$VERSION" != "$BASE_VERSION" ]; then

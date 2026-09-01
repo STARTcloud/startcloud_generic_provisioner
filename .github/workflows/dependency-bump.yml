@@ -1,42 +1,10 @@
 name: Dependency Bump
 
-# Keeps this provisioner's external dependencies current, as PRs — never
-# direct pushes — so the CI gate proves every bump before it lands:
-#   core_provisioner    driver.version                          → tag rewritten
-#   role collections    collections/<namespace>.<name>.version → tag rewritten
-#     (each pin's single line is "<owner>/<repo> <tag>"; collections pin and
-#     bump independently — a sender is matched to the pin file naming it)
-# All dependencies are release-consumed (fetched + sha256-verified by
-# .github/actions/stage-seed); molecule testing gates collection releases in
-# the collection repos themselves.
-#
-# Two entry paths, one bump implementation:
-#   repository_dispatch (event_type: dependency-update) — sent by the
-#     dependency repos' release-please workflows the moment a release is
-#     published, payload {repo, tag, sha}.
-#   schedule / workflow_dispatch — weekly reconcile that compares the pins
-#     against each dependency's latest release and re-dispatches
-#     dependency-update to this repo for anything stale. Covers missed
-#     dispatches and works alone until the dependency repos ship their
-#     notify jobs.
-#
-# The merged bump commit is conventional (fix: ...), so release-please picks
-# it up on main exactly like any hand-written fix — the release flow is
-# untouched. Bump branches are named bump/<dep>; dev-release.yml keys its PR
-# prereleases off that prefix.
-#
-# Tokens: everything cross-repo or PR-creating uses a GitHub App token, NOT
-# GITHUB_TOKEN — PRs and dispatches created with GITHUB_TOKEN do not trigger
-# workflows (GitHub's recursion guard), which would leave bump PRs with no CI
-# and auto-merge waiting forever. Required org secrets:
-#   BOT_APP_ID       GitHub App id (App needs contents:write + pull-requests:write,
-#   BOT_PRIVATE_KEY  installed on this repo and every dependency repo)
-
 on:
   repository_dispatch:
     types: [dependency-update]
   schedule:
-    - cron: '0 7 * * 1'
+    - cron: '0 7 * * *'
   workflow_dispatch:
 
 permissions:
@@ -54,9 +22,9 @@ jobs:
     steps:
       - name: Mint App token
         id: app
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
+          client-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
 
       - name: Checkout code
@@ -70,11 +38,6 @@ jobs:
           DEP_REPO: ${{ github.event.client_payload.repo }}
           DEP_TAG: ${{ github.event.client_payload.tag }}
         run: |
-          # The payload names the sender; this repo decides what a bump from
-          # that sender means. The driver is the one special case — any other
-          # sender must be named as source repo inside a collection pin file.
-          # Content integrity is enforced at fetch time by stage-seed's sha256
-          # verification against the release sidecar.
           case "$DEP_REPO" in
             STARTcloud/core_provisioner)
               DEP_NAME="core_provisioner"
@@ -92,13 +55,27 @@ jobs:
               git add "$PIN"
               ;;
           esac
+          echo "dep_name=$DEP_NAME" >> "$GITHUB_OUTPUT"
           if git diff --cached --quiet; then
             echo "Already at $DEP_TAG — nothing to bump."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "dep_name=$DEP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Close a superseded bump PR
+        if: ${{ steps.apply.outputs.changed == 'false' }}
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          DEP_TAG: ${{ github.event.client_payload.tag }}
+          DEP_NAME: ${{ steps.apply.outputs.dep_name }}
+        run: |
+          BRANCH="bump/$DEP_NAME"
+          EXISTING="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
+          if [ "$EXISTING" != "0" ]; then
+            gh pr close "$BRANCH" --delete-branch --comment "Superseded: main already pins $DEP_NAME at $DEP_TAG."
+            echo "Closed stale bump PR: $BRANCH"
+          fi
 
       - name: Commit, push and open the PR
         if: ${{ steps.apply.outputs.changed == 'true' }}
@@ -114,22 +91,18 @@ jobs:
           git config user.email "startcloud-bot[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
           git commit -m "$TITLE"
-          # Force-push: a stale bump branch from a superseded release is
-          # replaced, and its open PR (if any) simply retargets to the new
-          # commit.
           git push --force origin "$BRANCH"
           EXISTING="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
           if [ "$EXISTING" = "0" ]; then
+            BODY="Automated bump of \`$DEP_NAME\` to [$DEP_TAG](https://github.com/$DEP_REPO/releases/tag/$DEP_TAG)."
+            BODY="$BODY Merging releases it through the normal release-please flow."
             gh pr create \
               --head "$BRANCH" \
               --title "$TITLE" \
-              --body "Automated bump of \`$DEP_NAME\` to [$DEP_TAG](https://github.com/$DEP_REPO/releases/tag/$DEP_TAG). Merging releases it through the normal release-please flow."
+              --body "$BODY"
           else
             gh pr edit "$BRANCH" --title "$TITLE"
           fi
-          # Requires 'Allow auto-merge' + branch protection with required
-          # checks on main; without them this warns instead of failing so the
-          # PR still exists for a manual merge.
           gh pr merge "$BRANCH" --auto --squash \
             || echo "::warning::auto-merge unavailable — merge the bump PR manually"
 
@@ -140,10 +113,11 @@ jobs:
     steps:
       - name: Mint App token
         id: app
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
+          client-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
 
       - name: Checkout code
         uses: actions/checkout@v7
@@ -161,7 +135,15 @@ jobs:
             echo "Dispatched bump: $1 → $2"
           }
 
-          # core_provisioner: pin is the tag in driver.version.
+          close_stale() {
+            BRANCH="bump/$1"
+            EXISTING="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
+            if [ "$EXISTING" != "0" ]; then
+              gh pr close "$BRANCH" --delete-branch --comment "Superseded: main already pins $1 at $2."
+              echo "Closed stale bump PR: $BRANCH"
+            fi
+          }
+
           CORE_LATEST="$(gh release view --repo STARTcloud/core_provisioner --json tagName --jq .tagName)"
           CORE_PINNED="$(tr -d '[:space:]' < driver.version)"
           if [ "$CORE_LATEST" != "$CORE_PINNED" ]; then
@@ -169,9 +151,9 @@ jobs:
             dispatch "STARTcloud/core_provisioner" "$CORE_LATEST" "$CORE_SHA"
           else
             echo "core_provisioner pin current ($CORE_PINNED)"
+            close_stale core_provisioner "$CORE_PINNED"
           fi
 
-          # Role collections: every pin in collections/ is "<owner>/<repo> <tag>".
           for PIN in collections/*.version; do
             read -r REPO PINNED < "$PIN"
             LATEST="$(gh release view --repo "$REPO" --json tagName --jq .tagName)"
@@ -180,5 +162,6 @@ jobs:
               dispatch "$REPO" "$LATEST" "$SHA"
             else
               echo "$REPO pin current ($PINNED)"
+              close_stale "${REPO##*/}" "$PINNED"
             fi
           done

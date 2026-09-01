@@ -1,16 +1,5 @@
 name: Build Provisioner Artifact
 
-# Reusable: called by release-please.yml when a release is created (and available
-# via manual dispatch to rebuild an existing release's asset). Publishes release
-# assets shaped for the hyperweaver-agent provisioner registry:
-# <name>/<version>/... where name/version come from the root provisioner.yml.
-# Checks out the TAG on both paths so rebuilds stay byte-identical.
-#
-# Dependency fetches (core driver via driver.version, roles collection via
-# collection.version) + staging live in .github/actions/stage-seed, shared
-# with dev-release.yml. Nothing is vendored: both dependencies are pulled
-# from their pinned releases and sha256-verified at stage time.
-
 on:
   workflow_call:
     inputs:
@@ -48,11 +37,11 @@ jobs:
 
       - name: Mint App token
         id: app
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
+          client-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
-          owner: STARTcloud
+          owner: ${{ github.repository_owner }}
 
       - name: Stage seed archive from the release tag
         id: stage
@@ -62,11 +51,6 @@ jobs:
           make-latest-alias: 'true'
           token: ${{ steps.app.outputs.token }}
 
-      # Four assets per release: the versioned archive for provenance, a
-      # version-less one so consumers can fetch a stable URL
-      # (releases/latest/download/startcloud_generic_provisioner.tar.gz), and a
-      # .sha256 sidecar per archive (provisioner-catalog contract — the catalog
-      # and agents verify it after download).
       - name: Upload seed archives to the release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

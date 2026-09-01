@@ -1,10 +1,5 @@
 name: CI
 
-# Reusable CI. Called by release-please.yml on push to main, and run directly on
-# every PR. Runs ansible-lint (strict), then chains CodeQL — same layout as
-# hyperweaver-docs / hyperweaver-server / hyperweaver-ui. Molecule testing lives
-# in the startcloud_roles repo, gating the collection releases this repo pins.
-
 on:
   workflow_call:
   pull_request:
@@ -24,35 +19,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Stage the pinned driver and collections
+        uses: ./.github/actions/stage-seed
+        with:
+          make-latest-alias: 'false'
+          token: ${{ steps.app.outputs.token }}
+
       - name: Run ansible-lint (strict)
         uses: ansible/ansible-lint@main
-        # The package's ansible.cfg points collections/roles/vault at /vagrant
-        # (guest paths — this dir rsynced into the VM); env vars outrank
-        # ansible.cfg, so point them at the same files where they live on the
-        # runner. The vault password must be non-empty, so use the package's
-        # own placeholder file, exactly as the guest does.
         env:
-          ANSIBLE_COLLECTIONS_PATH: /home/runner/.ansible/collections
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/provisioners/ansible_collections
           ANSIBLE_ROLES_PATH: /home/runner/.ansible/roles
           ANSIBLE_VAULT_PASSWORD_FILE: ${{ github.workspace }}/provisioners/ansible/git_vault_password
         with:
           args: '--strict'
           working_directory: provisioners/ansible
-          requirements_file: requirements.yml
+
+  preflight:
+    name: Repository visibility
+    runs-on: ubuntu-latest
+    outputs:
+      private: ${{ steps.repo.outputs.private }}
+    steps:
+      - name: Read repository visibility
+        id: repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "private=$(gh api "repos/${{ github.repository }}" --jq .private)" >> "$GITHUB_OUTPUT"
 
   codeql-analysis:
     name: CodeQL
-    needs: [ansible-lint]
+    needs: [preflight]
+    if: ${{ needs.preflight.outputs.private == 'false' }}
     uses: ./.github/workflows/codeql.yml
 
-  # Single stable check name for branch protection: require only "CI OK" and
-  # every current and future job is covered through the needs chain.
-  # if: always() + the explicit fail matters — without it a failed dependency
-  # leaves this job SKIPPED, and GitHub treats a skipped required check as
-  # satisfied, so a red leg could auto-merge.
   ci-ok:
     name: CI OK
-    needs: [ansible-lint, codeql-analysis]
+    needs: [ansible-lint, preflight, codeql-analysis]
     if: always()
     runs-on: ubuntu-latest
     steps:

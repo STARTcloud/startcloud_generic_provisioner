@@ -1,22 +1,5 @@
 name: Dev Release
 
-# Publishes a testable dev prerelease for every dependency-bump PR (branches
-# named bump/<dep>, opened by dependency-bump.yml). Each push to the PR
-# rebuilds and REPLACES one prerelease per PR:
-#   tag      v<base>-dev.pr<N>       (base = provisioner.yml version, still
-#                                     unbumped — release-please decides the
-#                                     real next version only at release time)
-#   assets   <name>-<base>-dev.pr<N>.tar.gz + .sha256 (no version-less alias:
-#            releases/latest/download ignores prereleases anyway)
-# The GitHub prerelease flag is what distinguishes these — the catalog can
-# surface or filter dev releases on it later. Closing the PR (merged or not)
-# deletes the PR's prereleases and tags, so nothing accumulates.
-#
-# GITHUB_TOKEN is enough for the release itself: bump branches live in this
-# repo, and releases created with GITHUB_TOKEN intentionally do NOT fire the
-# release:published trigger — validate.yml stays scoped to real releases. The
-# App token is only for stage-seed's dependency downloads (private assets).
-
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
@@ -52,11 +35,11 @@ jobs:
 
       - name: Mint App token
         id: app
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
+          client-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
-          owner: STARTcloud
+          owner: ${{ github.repository_owner }}
 
       - name: Stage seed archive from the PR head
         id: stage
@@ -93,8 +76,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Match on the -dev.pr<N> suffix, not the base version: the base may
-          # have moved between pushes if a release landed mid-PR.
           gh release list --repo "${{ github.repository }}" \
             --json tagName --jq '.[].tagName' \
             | grep -E -- "-dev\.pr${{ github.event.pull_request.number }}$" \
