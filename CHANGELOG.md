@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.3.4...startcloud_generic_provisioner/v0.3.5) (2026-09-01)
+
+
+### Bug Fixes
+
+* updating CI/CD ([d19251d](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/d19251d720adfe9c92efc89be9b6b233fa43f007))
+
 ## [0.3.4](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/startcloud_generic_provisioner/v0.3.3...startcloud_generic_provisioner/v0.3.4) (2026-09-01)
 
 
