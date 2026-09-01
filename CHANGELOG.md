@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.0...v0.4.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* removing sha boostrap ([70d5de9](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/70d5de90b17dbf637ea4ed80f9c1673d173d3503))
+
 ## [0.4.0](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.3.5...v0.4.0) (2026-09-01)
 
 
