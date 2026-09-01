@@ -23,7 +23,9 @@
             ],
             "prerelease": false,
             "default-branch" : "main",
-            "component": "startcloud_generic_provisioner"
+            "component": "startcloud_generic_provisioner",
+            "include-component-in-tag": false,
+            "bootstrap-sha": "6ca9ecea12274b69e54febe235f0969a7099a9cc"
         }
     },
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
