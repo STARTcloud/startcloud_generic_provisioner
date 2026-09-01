@@ -311,7 +311,6 @@ hosts:
                 remote_collections: false
                 collections:
                   - startcloud.startcloud_roles
-                  - startcloud.hcl_roles
               -
                 description: "This playbook configures the machine for roles tagged as always, using the generated playbook: /vagrant/ansible/playbook.yml"
                 playbook: ansible/always-playbook.yml
@@ -410,7 +409,7 @@ hosts:
       extra_packages: []
       {% endif %}
 
-      ## Hosts entries for /etc/hosts ## Really only needed for Standalone
+      ## Hosts entries for /etc/hosts
       #etc_hosts_entries:
       #  - hostname:.null
       #    aliases:

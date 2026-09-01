@@ -32,13 +32,13 @@ Please describe how you verified your changes:
 - [ ] No breaking changes
 - [ ] Requires a `Hosts.yml` schema change (call it out below)
 - [ ] Changes the manifest (`provisioner.yml`) or the platform template contract
-- [ ] Requires a collection submodule bump
+- [ ] Requires a collection pin bump (`collections/*.version`)
 
 **Areas Affected:**
 
 - [ ] Manifest / platform template (provisioner.yml, templates/)
 - [ ] Ansible playbook generation (provisioners/ansible)
-- [ ] Collection submodule (startcloud_roles)
+- [ ] Collection pin (`collections/startcloud.startcloud_roles.version`)
 - [ ] Installers layout
 - [ ] Release / CI
 

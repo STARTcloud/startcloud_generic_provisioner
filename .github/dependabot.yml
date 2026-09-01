@@ -1,6 +1,7 @@
-# Dependabot configuration for Core Provisioner
-# The repo ships plain Ruby consumed by Vagrant — the only managed ecosystem
-# here is the GitHub Actions toolchain.
+# Dependabot configuration for STARTcloud Generic Provisioner
+# The core driver and role collections are release-pinned and bumped by
+# dependency-bump.yml — the only Dependabot-managed ecosystem here is the
+# GitHub Actions toolchain.
 
 version: 2
 updates:

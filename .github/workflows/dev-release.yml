@@ -12,9 +12,10 @@ name: Dev Release
 # surface or filter dev releases on it later. Closing the PR (merged or not)
 # deletes the PR's prereleases and tags, so nothing accumulates.
 #
-# GITHUB_TOKEN is enough here: bump branches live in this repo, and releases
-# created with GITHUB_TOKEN intentionally do NOT fire the release:published
-# trigger — validate.yml stays scoped to real releases.
+# GITHUB_TOKEN is enough for the release itself: bump branches live in this
+# repo, and releases created with GITHUB_TOKEN intentionally do NOT fire the
+# release:published trigger — validate.yml stays scoped to real releases. The
+# App token is only for stage-seed's dependency downloads (private assets).
 
 on:
   pull_request:
@@ -49,12 +50,21 @@ jobs:
           echo "Dev version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: STARTcloud
+
       - name: Stage seed archive from the PR head
         id: stage
         uses: ./.github/actions/stage-seed
         with:
           version: ${{ steps.ver.outputs.version }}
           make-latest-alias: 'false'
+          token: ${{ steps.app.outputs.token }}
 
       - name: Replace the PR's prerelease
         env:

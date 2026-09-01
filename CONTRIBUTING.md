@@ -19,7 +19,7 @@ Before creating an issue, please:
 2. **Keep changes focused** and write commit messages using [Conventional Commits](https://www.conventionalcommits.org/) — release-please builds the changelog and version bumps from them (`fix:` = patch, `feat:` = minor)
 3. **Make sure CI passes**: `ansible-lint --strict` must be clean over `provisioners/ansible`
 4. **Fill out the pull request template** completely
-5. **Role changes live in the collection submodule** (`provisioners/ansible_collections/startcloud/startcloud_roles`) — submit those to [STARTcloud/startcloud_roles](https://github.com/STARTcloud/startcloud_roles) and bump the submodule pointer here
+5. **Role changes live in the startcloud_roles collection** — submit those to [STARTcloud/startcloud_roles](https://github.com/STARTcloud/startcloud_roles); the release pinned in `collections/startcloud.startcloud_roles.version` is bumped here by the Dependency Bump workflow when a collection release publishes
 
 ### Testing Changes
 

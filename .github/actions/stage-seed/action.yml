@@ -24,6 +24,11 @@ inputs:
       releases/latest/download URL ignores prereleases anyway).
     required: false
     default: 'true'
+  token:
+    description: >-
+      GitHub token used to download the pinned release assets — private
+      dependency repos need it; bare release URLs cannot serve their assets.
+    required: true
 
 outputs:
   artifact:
@@ -42,14 +47,15 @@ runs:
     # document's folders[] syncs it to /secure/; there is no repo-side ssls/.
     - name: Fetch pinned core driver
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
       run: |
         TAG="$(tr -d '[:space:]' < driver.version)"
         VERSION="${TAG#v}"
         ARCHIVE="core_provisioner-${VERSION}.tar.gz"
-        BASE="https://github.com/STARTcloud/core_provisioner/releases/download/${TAG}"
+        REPO="STARTcloud/core_provisioner"
         echo "Fetching core driver ${TAG}"
-        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
-        curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
+        gh release download "$TAG" --repo "$REPO" --pattern "$ARCHIVE" --pattern "$ARCHIVE.sha256" --dir "$RUNNER_TEMP"
         EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
         ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
         if [ "$EXPECTED" != "$ACTUAL" ]; then
@@ -68,6 +74,8 @@ runs:
     # collection path the guest's ansible.cfg expects.
     - name: Fetch pinned roles collections
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
       run: |
         for PIN in collections/*.version; do
           BASENAME="${PIN##*/}"
@@ -77,11 +85,9 @@ runs:
           read -r REPO TAG < "$PIN"
           VERSION="${TAG#v}"
           ARCHIVE="${NAMESPACE}-${NAME}-${VERSION}.tar.gz"
-          BASE="https://github.com/${REPO}/releases/download/${TAG}"
           DEST="provisioners/ansible_collections/${NAMESPACE}/${NAME}"
           echo "Fetching ${NAMESPACE}.${NAME} ${TAG} from ${REPO}"
-          curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE" "$BASE/$ARCHIVE"
-          curl -fsSL -o "$RUNNER_TEMP/$ARCHIVE.sha256" "$BASE/$ARCHIVE.sha256"
+          gh release download "$TAG" --repo "$REPO" --pattern "$ARCHIVE" --pattern "$ARCHIVE.sha256" --dir "$RUNNER_TEMP"
           EXPECTED="$(awk '{print $1}' "$RUNNER_TEMP/$ARCHIVE.sha256")"
           ACTUAL="$(sha256sum "$RUNNER_TEMP/$ARCHIVE" | awk '{print $1}')"
           if [ "$EXPECTED" != "$ACTUAL" ]; then

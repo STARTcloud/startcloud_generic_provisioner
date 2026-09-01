@@ -46,12 +46,21 @@ jobs:
         with:
           ref: ${{ inputs.tag_name }}
 
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: STARTcloud
+
       - name: Stage seed archive from the release tag
         id: stage
         uses: ./.github/actions/stage-seed
         with:
           version: ${{ inputs.version }}
           make-latest-alias: 'true'
+          token: ${{ steps.app.outputs.token }}
 
       # Four assets per release: the versioned archive for provenance, a
       # version-less one so consumers can fetch a stable URL
