@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.1...v0.4.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* bump startcloud_roles to v0.3.1 ([#31](https://github.com/STARTcloud/startcloud_generic_provisioner/issues/31)) ([d6a20a3](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/d6a20a33d757d5d545cd410cfe0100078528eae0))
+* bump startcloud_roles to v0.3.2 ([#33](https://github.com/STARTcloud/startcloud_generic_provisioner/issues/33)) ([2965150](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/296515015aceb3f42885151d8658760a1319e93b))
+
 ## [0.4.1](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.0...v0.4.1) (2026-09-01)
 
 
