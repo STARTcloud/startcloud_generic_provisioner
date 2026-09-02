@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.2...v0.4.3) (2026-09-02)
+
+
+### Bug Fixes
+
+* bump core_provisioner to v0.2.15 ([#34](https://github.com/STARTcloud/startcloud_generic_provisioner/issues/34)) ([70851db](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/70851db4d255b59ddb568a1b44607fda435574f9))
+* bump core_provisioner to v0.2.16 ([#36](https://github.com/STARTcloud/startcloud_generic_provisioner/issues/36)) ([6e0c8d2](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/6e0c8d27e3d0210c5cf771ee80f7febe3f26a3a2))
+
 ## [0.4.2](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.1...v0.4.2) (2026-09-02)
 
 
