@@ -1,4 +1,4 @@
 module Provisioner
     NAME = 'startcloud_generic_provisioner'
-    VERSION = '0.4.2'
+    VERSION = '0.4.3'
 end
