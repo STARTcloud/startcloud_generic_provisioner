@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.4](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.3...v0.4.4) (2026-10-07)
+
+
+### Bug Fixes
+
+* bump core_provisioner to v0.2.17 ([7583303](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/7583303fd05a0a7d7792e2ee40fd584b13bc06d6))
+* bump core_provisioner to v0.2.17 ([633ff60](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/633ff60d6464b58aedc8fdb7b3fcd7020b98464f))
+* bump startcloud_roles to v0.3.3 ([#37](https://github.com/STARTcloud/startcloud_generic_provisioner/issues/37)) ([d66acc3](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/d66acc3e047beb8dcfb52483036f382fc1ae6c09))
+* bump startcloud_roles to v0.3.4 ([504a0ee](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/504a0ee2560cbabfc129b89eebc40359ff0ec1c8))
+* bump startcloud_roles to v0.3.4 ([1849c40](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/1849c405ecc0b469f51530478f352b63e488a816))
+* converge .gitignore and scripts README on the family ([94d2dbb](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/94d2dbb94469f6c2ef48735dce443784c7a2fdda))
+* converge dependency-bump on the family and add the Lint & Format gate ([230e06e](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/230e06eeeb52f20432555eb13576aa659bbc2af5))
+* ignore the ansible-lint cache directory ([359bee0](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/359bee0bde3ee0e4dbccf288f378646f020c0dde))
+
 ## [0.4.3](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.2...v0.4.3) (2026-09-02)
 
 
