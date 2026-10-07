@@ -25,6 +25,7 @@ templates/auto-SHI-Hosts.yml
 DeployKey_rsa
 *.vdi
 vault-Docova.yml
+notifications.md
 
 *.IDS
 *.ID

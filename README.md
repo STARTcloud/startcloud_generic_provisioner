@@ -11,15 +11,15 @@ Documentation for STARTcloud Generic Provisioner
 
 ## Table of Contents
 
-* [About the Project](#about-the-project)
-* [Key Features](#key-features)
-* [Roadmap](#roadmap)
-* [Provider Support](#provider-support)
-* [Built With](#built-with)
-* [Contributing](#contributing)
-* [License](#license)
-* [Contact](#authors)
-* [Acknowledgements](#acknowledgments)
+- [About the Project](#about-the-project)
+- [Key Features](#key-features)
+- [Roadmap](#roadmap)
+- [Provider Support](#provider-support)
+- [Built With](#built-with)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#authors)
+- [Acknowledgements](#acknowledgments)
 
 ## About the Project
 
@@ -27,10 +27,10 @@ STARTcloud Generic Provisioner is a collection of Generic STARTcloud Roles.
 
 ## Key Features
 
-* **Role Management**: Offers a comprehensive set of Ansible roles for various aspects of VM preparation and configuration.
-* **Technology Installation**: Automates the installation of services such as Docker, MariaDB, Nextcloud, Guacamole, and Graylog from the startcloud_roles collection, simplifying the deployment process.
-* **Service Configuration**: Simplifies the setup of necessary services on VMs, streamlining the deployment process.
-* **Dependency Installation**: Handles the installation of required dependencies, reducing manual setup efforts.
+- **Role Management**: Offers a comprehensive set of Ansible roles for various aspects of VM preparation and configuration.
+- **Technology Installation**: Automates the installation of services such as Docker, MariaDB, Nextcloud, Guacamole, and Graylog from the startcloud_roles collection, simplifying the deployment process.
+- **Service Configuration**: Simplifies the setup of necessary services on VMs, streamlining the deployment process.
+- **Dependency Installation**: Handles the installation of required dependencies, reducing manual setup efforts.
 
 ### Interacting with `Hosts.yml` and `Hosts.rb`
 
@@ -70,10 +70,10 @@ See the [open issues](https://github.com/STARTcloud/startcloud_generic_provision
 
 ## Built With
 
-* [Vagrant](https://www.vagrantup.com/) - Portable Development Environment Suite.
-* [VirtualBox](https://www.virtualbox.org/wiki/Downloads) - Hypervisor.
-* [Ansible](https://www.ansible.com/) - Virtual Machine Automation Management.
-* [Core Provisioner](https://github.com/STARTcloud/core_provisioner) - Core Provisioner.
+- [Vagrant](https://www.vagrantup.com/) - Portable Development Environment Suite.
+- [VirtualBox](https://www.virtualbox.org/wiki/Downloads) - Hypervisor.
+- [Ansible](https://www.ansible.com/) - Virtual Machine Automation Management.
+- [Core Provisioner](https://github.com/STARTcloud/core_provisioner) - Core Provisioner.
 
 ## Contributing
 
@@ -81,9 +81,9 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Authors
 
-* **Joel Anderson** - *Initial work* - [JoelProminic](https://github.com/JoelProminic)
-* **Justin Hill** - *Initial work* - [JustinProminic](https://github.com/JustinProminic)
-* **Mark Gilbert** - *Refactor* - [MarkProminic](https://github.com/MarkProminic)
+- **Joel Anderson** - _Initial work_ - [JoelProminic](https://github.com/JoelProminic)
+- **Justin Hill** - _Initial work_ - [JustinProminic](https://github.com/JustinProminic)
+- **Mark Gilbert** - _Refactor_ - [MarkProminic](https://github.com/MarkProminic)
 
 See also the list of [contributors](https://github.com/STARTcloud/startcloud_generic_provisioner/graphs/contributors) who participated in this project.
 
@@ -93,4 +93,4 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LIC
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
+- Hat tip to anyone whose code was used

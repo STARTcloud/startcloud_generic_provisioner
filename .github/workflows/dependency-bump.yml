@@ -3,8 +3,6 @@ name: Dependency Bump
 on:
   repository_dispatch:
     types: [dependency-update]
-  schedule:
-    - cron: '0 7 * * *'
   workflow_dispatch:
 
 permissions:
@@ -103,65 +101,3 @@ jobs:
           else
             gh pr edit "$BRANCH" --title "$TITLE"
           fi
-          gh pr merge "$BRANCH" --auto --squash \
-            || echo "::warning::auto-merge unavailable — merge the bump PR manually"
-
-  reconcile:
-    name: Reconcile pins against latest releases
-    if: ${{ github.event_name != 'repository_dispatch' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Mint App token
-        id: app
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ secrets.BOT_APP_ID }}
-          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Re-dispatch dependency-update for stale pins
-        env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-        run: |
-          dispatch() {
-            gh api "repos/${{ github.repository }}/dispatches" \
-              -f event_type=dependency-update \
-              -f "client_payload[repo]=$1" \
-              -f "client_payload[tag]=$2" \
-              -f "client_payload[sha]=$3"
-            echo "Dispatched bump: $1 → $2"
-          }
-
-          close_stale() {
-            BRANCH="bump/$1"
-            EXISTING="$(gh pr list --head "$BRANCH" --state open --json number --jq length)"
-            if [ "$EXISTING" != "0" ]; then
-              gh pr close "$BRANCH" --delete-branch --comment "Superseded: main already pins $1 at $2."
-              echo "Closed stale bump PR: $BRANCH"
-            fi
-          }
-
-          CORE_LATEST="$(gh release view --repo STARTcloud/core_provisioner --json tagName --jq .tagName)"
-          CORE_PINNED="$(tr -d '[:space:]' < driver.version)"
-          if [ "$CORE_LATEST" != "$CORE_PINNED" ]; then
-            CORE_SHA="$(gh api "repos/STARTcloud/core_provisioner/commits/$CORE_LATEST" --jq .sha)"
-            dispatch "STARTcloud/core_provisioner" "$CORE_LATEST" "$CORE_SHA"
-          else
-            echo "core_provisioner pin current ($CORE_PINNED)"
-            close_stale core_provisioner "$CORE_PINNED"
-          fi
-
-          for PIN in collections/*.version; do
-            read -r REPO PINNED < "$PIN"
-            LATEST="$(gh release view --repo "$REPO" --json tagName --jq .tagName)"
-            if [ "$LATEST" != "$PINNED" ]; then
-              SHA="$(gh api "repos/$REPO/commits/$LATEST" --jq .sha)"
-              dispatch "$REPO" "$LATEST" "$SHA"
-            else
-              echo "$REPO pin current ($PINNED)"
-              close_stale "${REPO##*/}" "$PINNED"
-            fi
-          done
