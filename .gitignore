@@ -27,11 +27,16 @@ DeployKey_rsa
 vault-Docova.yml
 notifications.md
 
+# Don't include your ID Files!
 *.IDS
 *.ID
 *.id
 *.ids
 SAFE.IDS
+# Except org certifier SAFE copies (public cert only, no private key) —
+# needed so new domains can cross certify the org out of the box
+!id-files/org-safe-ids/*.id
+!id-files/org-safe-ids/*.ids
 
 # Build Files to Ignore
 .DS_Store
@@ -44,3 +49,10 @@ SAFE.IDS
 build/
 test_files/
 
+# Installer binaries never get committed
+installers/*/archives/*.tar.xz
+installers/*/archives/*.tar.gz
+installers/*/archives/*.tar
+installers/*/archives/*.zip
+installers/*/archives/*.gz
+installers/*/archives/*.tgz
