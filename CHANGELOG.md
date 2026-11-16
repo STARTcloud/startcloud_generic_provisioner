@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.4...v0.4.5) (2026-11-16)
+
+
+### Bug Fixes
+
+* follow the docker role rename to container ([a2297f6](https://github.com/STARTcloud/startcloud_generic_provisioner/commit/a2297f6a6d3d62757e4ca5067b618f6c376866fb))
+
 ## [0.4.4](https://github.com/STARTcloud/startcloud_generic_provisioner/compare/v0.4.3...v0.4.4) (2026-10-07)
 
 
