@@ -122,7 +122,7 @@ metadata:
       description: Installs the BigBlueButton web conferencing platform on Docker
       depends_on:
         - certbot
-        - docker
+        - container
     - name: bottles
       label: Bottles
       description: Installs Bottles via Flatpak for running Windows applications
@@ -133,8 +133,8 @@ metadata:
       description: Installs the Composer dependency manager for PHP
       depends_on:
         - php
-    - name: docker
-      label: Docker
+    - name: container
+      label: Container Engine
       description: Installs the Docker container engine
     - name: drupal
       label: Drupal
@@ -147,7 +147,7 @@ metadata:
       label: Frigate NVR
       description: Installs the Frigate network video recorder in Docker
       depends_on:
-        - docker
+        - container
     - name: graylog
       label: Graylog
       description: Installs the Graylog log management server backed by MongoDB
@@ -157,7 +157,7 @@ metadata:
       label: Greenbone Vulnerability Management
       description: Installs the Greenbone (OpenVAS) vulnerability scanner in Docker
       depends_on:
-        - docker
+        - container
     - name: guacamole
       label: Apache Guacamole
       description: >-
@@ -177,7 +177,7 @@ metadata:
       label: Kubernetes
       description: Installs Kubernetes tooling on top of the Docker engine
       depends_on:
-        - docker
+        - container
     - name: mariadb
       label: MariaDB
       description: Installs the MariaDB database server
@@ -196,7 +196,7 @@ metadata:
       label: Mumble Web
       description: Installs the web-based Mumble voice chat client in Docker
       depends_on:
-        - docker
+        - container
     - name: nextcloud
       label: Nextcloud
       description: >-
@@ -287,7 +287,7 @@ metadata:
       label: Vaultwarden
       description: Installs the Vaultwarden password manager server in Docker
       depends_on:
-        - docker
+        - container
     - name: xrdp
       label: xRDP
       description: Installs the xRDP remote desktop server on the GNOME desktop
